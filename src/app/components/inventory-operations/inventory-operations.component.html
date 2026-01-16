@@ -1,0 +1,435 @@
+<div class="operations-container">
+  <div class="header">
+    <h1>Opérations d'Inventaire</h1>
+    <button class="btn btn-secondary" (click)="router.navigate(['/inventory/operations'])">
+      ← Retour à l'inventaire
+    </button>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+    <button class="close-btn" (click)="error = null">×</button>
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+    <button class="close-btn" (click)="successMessage = null">×</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button
+      class="tab"
+      [class.active]="activeTab === 'create'"
+      (click)="setTab('create')"
+    >
+      Créer Inventaire
+    </button>
+    <button
+      class="tab"
+      [class.active]="activeTab === 'reserve'"
+      (click)="setTab('reserve')"
+    >
+      Réserver Stock
+    </button>
+    <button
+      class="tab"
+      [class.active]="activeTab === 'inbound'"
+      (click)="setTab('inbound')"
+    >
+      Entrée de Stock
+    </button>
+    <button
+      class="tab"
+      [class.active]="activeTab === 'outbound'"
+      (click)="setTab('outbound')"
+    >
+      Sortie de Stock
+    </button>
+    <button
+      class="tab"
+      [class.active]="activeTab === 'adjustment'"
+      (click)="setTab('adjustment')"
+    >
+      Ajustement
+    </button>
+    <button
+      class="tab"
+      [class.active]="activeTab === 'allocation'"
+      (click)="setTab('allocation')"
+    >
+      Allocation Multi-Entrepôts
+    </button>
+  </div>
+
+  <!-- creation de stock -->
+  <div *ngIf="activeTab === 'create'" class="tab-content">
+    <h2>Créer un Nouvel Inventaire</h2>
+
+    <div *ngIf="products.length === 0 || warehouses.length === 0" class="alert alert-info">
+      <p *ngIf="products.length === 0">Aucun produit disponible. Veuillez d'abord créer des produits.</p>
+      <p *ngIf="warehouses.length === 0">Aucun entrepôt disponible. Veuillez d'abord créer des entrepôts.</p>
+    </div>
+
+    <form class="operation-form" (ngSubmit)="createInventory()" #createForm="ngForm" *ngIf="products.length > 0 && warehouses.length > 0">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Produit *</label>
+          <select
+            [(ngModel)]="newInventoryForm.productId"
+            name="productId"
+            required
+            class="form-control"
+            (change)="onProductSelected($event)"
+          >
+            <option value="">-- Sélectionner un produit --</option>
+            <option *ngFor="let product of products" [value]="product.id">
+              {{ product.name }} ({{ product.code }})
+            </option>
+          </select>
+          <small *ngIf="newInventoryForm.productId">Sélectionné: {{ newInventoryForm.productName }}</small>
+        </div>
+
+        <div class="form-group">
+          <label>Entrepôt *</label>
+          <select
+            [(ngModel)]="newInventoryForm.warehouseId"
+            name="warehouseId"
+            required
+            class="form-control"
+            (change)="onWarehouseSelected($event)"
+          >
+            <option value="">-- Sélectionner un entrepôt --</option>
+            <option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
+              {{ warehouse.name }} ({{ warehouse.code }})
+            </option>
+          </select>
+          <small *ngIf="newInventoryForm.warehouseId">Sélectionné: {{ newInventoryForm.warehouseName }}</small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Code Produit</label>
+          <input
+            type="text"
+            [(ngModel)]="newInventoryForm.productCode"
+            name="productCode"
+            class="form-control"
+            readonly
+            placeholder="Rempli automatiquement"
+          />
+        </div>
+        <div class="form-group">
+          <label>Code Entrepôt</label>
+          <input
+            type="text"
+            [(ngModel)]="newInventoryForm.warehouseCode"
+            name="warehouseCode"
+            class="form-control"
+            readonly
+            placeholder="Rempli automatiquement"
+          />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Quantité en Main *</label>
+          <input
+            type="number"
+            [(ngModel)]="newInventoryForm.qtyOnHand"
+            name="qtyOnHand"
+            required
+            min="0"
+            class="form-control"
+            [class.is-invalid]="newInventoryForm.qtyReserved > newInventoryForm.qtyOnHand"
+          />
+          <div *ngIf="newInventoryForm.qtyReserved > newInventoryForm.qtyOnHand" class="invalid-feedback">
+            La quantité réservée ne peut pas dépasser la quantité en main
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Quantité Réservée</label>
+          <input
+            type="number"
+            [(ngModel)]="newInventoryForm.qtyReserved"
+            name="qtyReserved"
+            min="0"
+            [max]="newInventoryForm.qtyOnHand"
+            class="form-control"
+          />
+          <small>Doit être ≤ quantité en main ({{ newInventoryForm.qtyOnHand }})</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Description du Produit</label>
+        <textarea
+          [(ngModel)]="newInventoryForm.productDescription"
+          name="productDescription"
+          rows="2"
+          class="form-control"
+          readonly
+        ></textarea>
+        <small>Description du produit sélectionné</small>
+      </div>
+
+      <div class="form-actions">
+        <button
+          type="submit"
+          class="btn btn-success"
+          [disabled]="loading || createForm.invalid"
+        >
+          {{ loading ? 'Création...' : 'Créer Inventaire' }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="resetNewInventoryForm()"
+          [disabled]="loading"
+        >
+          Réinitialiser
+        </button>
+      </div>
+    </form>
+  </div>
+  <!-- Réservation -->
+  <div *ngIf="activeTab === 'reserve'" class="tab-content">
+    <h2>Réserver / Libérer du Stock</h2>
+    <form class="operation-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label>ID Produit *</label>
+          <input
+            type="number"
+            [(ngModel)]="reservationForm.productId"
+            name="reserveProductId"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>ID Entrepôt *</label>
+          <input
+            type="number"
+            [(ngModel)]="reservationForm.warehouseId"
+            name="reserveWarehouseId"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Quantité *</label>
+          <input
+            type="number"
+            [(ngModel)]="reservationForm.quantity"
+            name="reserveQuantity"
+            min="1"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Document de Référence *</label>
+          <input
+            type="text"
+            [(ngModel)]="reservationForm.referenceDoc"
+            name="reserveReferenceDoc"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-success" (click)="reserveStock()" [disabled]="loading">
+          {{ loading ? 'Traitement...' : 'Réserver' }}
+        </button>
+        <button type="button" class="btn btn-warning" (click)="releaseReservation()" [disabled]="loading">
+          Libérer Réservation
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Entrée de stock -->
+  <div *ngIf="activeTab === 'inbound'" class="tab-content">
+    <h2>Entrée de Stock (Inbound)</h2>
+    <form class="operation-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label>ID Produit *</label>
+          <input type="number" [(ngModel)]="movementForm.productId" name="productId" required />
+        </div>
+        <div class="form-group">
+          <label>ID Entrepôt *</label>
+          <input type="number" [(ngModel)]="movementForm.warehouseId" name="warehouseId" required />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Quantité *</label>
+        <input type="number" [(ngModel)]="movementForm.quantity" name="quantity" min="1" required />
+      </div>
+
+      <div class="form-group">
+        <label>Document de Référence</label>
+        <input type="text" [(ngModel)]="movementForm.referenceDoc" name="referenceDoc" />
+      </div>
+
+      <div class="form-group">
+        <label>Description</label>
+        <textarea [(ngModel)]="movementForm.description" name="description" rows="3"></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" (click)="recordInbound()" [disabled]="loading">
+          {{ loading ? 'Enregistrement...' : 'Enregistrer Entrée' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Sortie de stock -->
+  <div *ngIf="activeTab === 'outbound'" class="tab-content">
+    <h2>Sortie de Stock (Outbound)</h2>
+    <form class="operation-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label>ID Produit *</label>
+          <input type="number" [(ngModel)]="movementForm.productId" name="productId" required />
+        </div>
+        <div class="form-group">
+          <label>ID Entrepôt *</label>
+          <input type="number" [(ngModel)]="movementForm.warehouseId" name="warehouseId" required />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Quantité *</label>
+        <input type="number" [(ngModel)]="movementForm.quantity" name="quantity" min="1" required />
+      </div>
+
+      <div class="form-group">
+        <label>Document de Référence</label>
+        <input type="text" [(ngModel)]="movementForm.referenceDoc" name="referenceDoc" />
+      </div>
+
+      <div class="form-group">
+        <label>Description</label>
+        <textarea [(ngModel)]="movementForm.description" name="description" rows="3"></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-danger" (click)="recordOutbound()" [disabled]="loading">
+          {{ loading ? 'Enregistrement...' : 'Enregistrer Sortie' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Ajustement -->
+  <div *ngIf="activeTab === 'adjustment'" class="tab-content">
+    <h2>Ajustement de Stock</h2>
+    <form class="operation-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label>ID Produit *</label>
+          <input type="number" [(ngModel)]="adjustmentForm.productId" name="productId" required />
+        </div>
+        <div class="form-group">
+          <label>ID Entrepôt *</label>
+          <input type="number" [(ngModel)]="adjustmentForm.warehouseId" name="warehouseId" required />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Quantité d'Ajustement * (positif ou négatif)</label>
+        <input type="number" [(ngModel)]="adjustmentForm.adjustmentQuantity" name="adjustmentQuantity" required />
+        <small>Utilisez un nombre négatif pour réduire le stock</small>
+      </div>
+
+      <div class="form-group">
+        <label>Document de Référence</label>
+        <input type="text" [(ngModel)]="adjustmentForm.referenceDoc" name="referenceDoc" />
+      </div>
+
+      <div class="form-group">
+        <label>Raison</label>
+        <textarea [(ngModel)]="adjustmentForm.reason" name="reason" rows="3"></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-warning" (click)="recordAdjustment()" [disabled]="loading">
+          {{ loading ? 'Enregistrement...' : 'Enregistrer Ajustement' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Allocation -->
+  <div *ngIf="activeTab === 'allocation'" class="tab-content">
+    <h2>Allocation Multi-Entrepôts</h2>
+    <form class="operation-form">
+      <div class="form-group">
+        <label>ID Produit *</label>
+        <input type="number" [(ngModel)]="allocationForm.productId" name="productId" required />
+      </div>
+
+      <div class="form-group">
+        <label>Quantité Totale *</label>
+        <input type="number" [(ngModel)]="allocationForm.totalQuantity" name="totalQuantity" min="1" required />
+      </div>
+
+      <div class="form-group">
+        <label>IDs Entrepôts (par priorité) *</label>
+        <input
+          type="text"
+          [(ngModel)]="warehouseIdsInput"
+          name="warehouseIds"
+          placeholder="Ex: 1, 2, 3"
+          required
+        />
+        <small>Séparez les IDs par des virgules, dans l'ordre de priorité</small>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-info" (click)="allocateStock()" [disabled]="loading">
+          {{ loading ? 'Allocation...' : 'Allouer Stock' }}
+        </button>
+      </div>
+    </form>
+
+    <!-- Résultat allocation -->
+    <div *ngIf="allocationResult" class="allocation-result">
+      <h3>Résultat de l'Allocation</h3>
+      <div class="result-summary">
+        <p><strong>Quantité demandée:</strong> {{ allocationResult.requestedQuantity }}</p>
+        <p><strong>Total alloué:</strong> {{ allocationResult.totalAllocated }}</p>
+        <p><strong>Manque:</strong> <span [class.text-danger]="allocationResult.shortage > 0">{{ allocationResult.shortage }}</span></p>
+        <p><strong>Statut:</strong>
+          <span [class.success-badge]="allocationResult.fullyAllocated" [class.warning-badge]="!allocationResult.fullyAllocated">
+            {{ allocationResult.fullyAllocated ? 'Allocation complète' : 'Allocation partielle' }}
+          </span>
+        </p>
+      </div>
+
+      <h4>Détail par entrepôt:</h4>
+      <table class="allocation-table">
+        <thead>
+        <tr>
+          <th>Entrepôt ID</th>
+          <th>Quantité Allouée</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let allocation of allocationResult.allocations">
+          <td>{{ allocation.warehouseId }}</td>
+          <td>{{ allocation.allocatedQuantity }}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

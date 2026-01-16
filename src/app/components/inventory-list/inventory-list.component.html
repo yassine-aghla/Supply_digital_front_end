@@ -1,0 +1,135 @@
+<div class="inventory-container">
+  <div class="header">
+    <h1>Gestion des Inventaires</h1>
+
+    <div class="header-actions">
+      <button class="btn btn-primary" routerLink="/inventory/operations">
+        Opérations de Stock
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filters">
+    <div class="search-box">
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        placeholder="Rechercher par produit, entrepôt, code..."
+        class="search-input"
+      />
+    </div>
+
+    <label class="filter-checkbox">
+      <input
+        type="checkbox"
+        [(ngModel)]="filterLowStock"
+      />
+      <span>Afficher uniquement les stocks faibles (< 10)</span>
+    </label>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+    <button class="close-btn" (click)="error = null">×</button>
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+    <button class="close-btn" (click)="successMessage = null">×</button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Chargement des inventaires...</p>
+  </div>
+
+  <!-- Table des inventaires -->
+  <div *ngIf="!loading && filteredInventories.length > 0" class="table-container">
+    <table class="inventory-table">
+      <thead>
+      <tr>
+        <th>Produit</th>
+        <th>Entrepôt</th>
+        <th>Qté En Main</th>
+        <th>Qté Réservée</th>
+        <th>Disponible</th>
+        <th>Niveau Stock</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let inventory of filteredInventories">
+        <td>
+          <div class="product-info">
+            <strong>{{ inventory.productName }}</strong>
+            <span class="code-badge">{{ inventory.productCode }}</span>
+          </div>
+        </td>
+        <td>
+          <div class="warehouse-info">
+            <strong>{{ inventory.warehouseName }}</strong>
+            <span class="code-badge">{{ inventory.warehouseCode }}</span>
+          </div>
+        </td>
+        <td class="qty-cell">
+          <span class="qty-badge qty-onhand">{{ inventory.qtyOnHand }}</span>
+        </td>
+        <td class="qty-cell">
+          <span class="qty-badge qty-reserved">{{ inventory.qtyReserved }}</span>
+        </td>
+        <td class="qty-cell">
+          <span class="qty-badge qty-available">{{ getAvailableQty(inventory) }}</span>
+        </td>
+        <td>
+            <span
+              class="stock-level-badge"
+              [ngClass]="'level-' + getStockLevel(inventory)"
+            >
+              {{ getStockLevelLabel(getStockLevel(inventory)) }}
+            </span>
+        </td>
+        <td class="actions">
+          <button
+            class="btn-icon btn-info"
+            (click)="checkAvailability(inventory.id!)"
+            title="Vérifier disponibilité"
+          >
+            ℹ️
+          </button>
+          <button
+            class="btn-icon btn-delete"
+            (click)="deleteInventory(inventory.id!)"
+            title="Supprimer"
+          >
+            🗑️
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Message si aucun inventaire -->
+  <div *ngIf="!loading && filteredInventories.length === 0" class="no-data">
+    <p>{{ searchTerm || filterLowStock ? 'Aucun résultat trouvé' : 'Aucun inventaire disponible' }}</p>
+  </div>
+
+  <!-- Statistiques -->
+  <div *ngIf="!loading && inventories.length > 0" class="stats-container">
+    <div class="stat-card">
+      <h3>Total Inventaires</h3>
+      <p class="stat-value">{{ inventories.length }}</p>
+    </div>
+    <div class="stat-card">
+      <h3>Ruptures de Stock</h3>
+
+    </div>
+    <div class="stat-card">
+      <h3>Stocks Faibles</h3>
+
+    </div>
+  </div>
+</div>

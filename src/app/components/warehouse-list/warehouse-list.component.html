@@ -1,0 +1,145 @@
+<div class="warehouse-container">
+  <div class="header">
+    <h1>Gestion des Entrepôts</h1>
+
+    <button class="btn btn-primary" (click)="openCreateForm()">
+      + Nouvel Entrepôt
+    </button>
+    <button class="btn btn-primary" (click)="loadWarehouses()">
+      Tous les entropots
+    </button>
+
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+    <button class="close-btn" (click)="error = null">×</button>
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+    <button class="close-btn" (click)="successMessage = null">×</button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading && !showForm" class="loading">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <!-- Formulaire Modal -->
+  <div *ngIf="showForm" class="modal-overlay" (click)="closeForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editMode ? 'Modifier l\'entrepôt' : 'Nouvel entrepôt' }}</h2>
+        <button class="close-btn" (click)="closeForm()">×</button>
+      </div>
+
+      <form (ngSubmit)="saveWarehouse()" class="warehouse-form">
+        <div class="form-group">
+          <label for="name">Nom *</label>
+          <input
+            type="text"
+            id="name"
+            [(ngModel)]="currentWarehouse.name"
+            name="name"
+            placeholder="Nom de l'entrepôt"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="code">Code *</label>
+          <input
+            type="text"
+            id="code"
+            [(ngModel)]="currentWarehouse.code"
+            name="code"
+            placeholder="Code unique"
+            required
+          />
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label>
+            <input
+              type="checkbox"
+              [(ngModel)]="currentWarehouse.active"
+              name="active"
+            />
+            <span>Actif</span>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeForm()">
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading">
+            {{ loading ? 'Enregistrement...' : 'Enregistrer' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Table des entrepôts -->
+  <div *ngIf="!loading && warehouses.length > 0" class="table-container">
+    <table class="warehouse-table">
+      <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nom</th>
+        <th>Code</th>
+        <th>Statut</th>
+        <th>Modifier Statut</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let warehouse of warehouses">
+        <td>{{ warehouse.id }}</td>
+        <td>{{ warehouse.name }}</td>
+        <td><span class="code-badge">{{ warehouse.code }}</span></td>
+        <td>
+            <span class="badge" [class.active]="warehouse.active" [class.inactive]="!warehouse.active">
+              {{ warehouse.active ? 'ACTIF' : 'INACTIF' }}
+            </span>
+        </td>
+        <td>
+          <button class="btn btn-outline-primary btn-change"
+                  (click)="Updatewarehousestatut(warehouse.id!)"
+                  title="Changer Statut">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </td>
+        <td class="actions">
+          <button
+            class="btn-icon btn-edit"
+            (click)="openEditForm(warehouse)"
+            title="Modifier"
+          >
+            <i class="btn-icon bi-pen"></i>
+          </button>
+          <button
+            class="btn-icon btn-delete"
+            (click)="deleteWarehouse(warehouse.id!)"
+            title="Supprimer"
+          >
+            <i class="btn-icon bi-trash"></i>
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Message si aucun entrepôt -->
+  <div *ngIf="!loading && warehouses.length === 0" class="no-data">
+    <p>Aucun entrepôt trouvé</p>
+    <button class="btn btn-primary" (click)="openCreateForm()">
+      Créer le premier entrepôt
+    </button>
+  </div>
+</div>
