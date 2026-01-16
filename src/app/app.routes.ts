@@ -3,13 +3,12 @@ import { ProductListComponent } from './components/product-list/product-list.com
 import {WarehouseListComponent} from './components/warehouse-list/warehouse-list.component';
 import { InventoryListComponent } from './components/inventory-list/inventory-list.component';
 import { InventoryOperationsComponent } from './components/inventory-operations/inventory-operations.component';
-import {DashboardHomeComponent} from './components/dashboard-home/dashboard-home.component';
-import {DashboardLayoutComponent} from './components/dashboard-layout/dashboard-layout.component';
+import {DashboardComponent} from './components/dashboard/dashboard.component';
 export const routes: Routes = [
   // Route par défaut - redirige vers /products
   {
     path: '',
-    component:DashboardLayoutComponent,
+    component:DashboardComponent,
     pathMatch: 'full'
   },
   // Route pour la liste des produits
@@ -36,36 +35,8 @@ export const routes: Routes = [
     title: 'Opérations d\'Inventaire'
   },
 
-  {
-    path: 'users',
-    component: DashboardHomeComponent, // Placeholder
-    title: 'Utilisateurs'
-  },
-  {
-    path: 'purchase-orders',
-    component: DashboardHomeComponent, // Placeholder
-    title: 'Bons d\'Achat'
-  },
-  {
-    path: 'sales-orders',
-    component: DashboardHomeComponent, // Placeholder
-    title: 'Bons de Vente'
-  },
-  {
-    path: 'shipments',
-    component: DashboardHomeComponent, // Placeholder
-    title: 'Expéditions'
-  },
-  {
-    path: 'suppliers',
-    component: DashboardHomeComponent, // Placeholder
-    title: 'Fournisseurs'
-  },
-  {
-    path: 'carriers',
-    component: DashboardHomeComponent, // Placeholder
-    title: 'Transporteurs'
-  },
+
+
 
   // Route pour créer un nouveau produit (à créer plus tard)
   // {

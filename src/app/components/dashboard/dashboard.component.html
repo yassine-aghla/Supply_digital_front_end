@@ -1,0 +1,100 @@
+<!-- pages/dashboard/dashboard.component.html -->
+<div class="dashboard fade-in">
+  <div class="dashboard-header">
+    <h1>Dashboard</h1>
+    <p class="subtitle">Vue d'ensemble de votre système de logistique</p>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="stats-grid">
+    <div *ngFor="let stat of statCards" class="stat-card" [style.background]="stat.color">
+      <div class="stat-icon">
+        <i [class]="stat.icon"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stat.title }}</h3>
+        <p class="stat-value">{{ stat.value.toLocaleString() }}</p>
+        <div class="stat-change" [style.color]="getChangeColor(stat.change)">
+          <i [class]="getChangeIcon(stat.change)"></i>
+          <span>{{ Math.abs(stat.change) }}%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="dashboard-content">
+    <!-- Graphiques -->
+    <div class="dashboard-section">
+      <div class="section-header">
+        <h2><i class="fas fa-chart-line"></i> Vue d'ensemble des stocks</h2>
+      </div>
+      <div class="chart-placeholder">
+        <div class="chart-info">
+          <h3>Disponibilité des stocks</h3>
+          <p>Graphique interactif des niveaux de stock par catégorie</p>
+        </div>
+        <div class="chart-legend">
+          <div class="legend-item">
+            <span class="legend-color" style="background: #667eea"></span>
+            <span>Disponible</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #f093fb"></span>
+            <span>Réservé</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #4facfe"></span>
+            <span>En rupture</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activités récentes -->
+    <div class="dashboard-section">
+      <div class="section-header">
+        <h2>Activités récentes</h2>
+      </div>
+      <div class="activities-list">
+        <div *ngFor="let activity of recentActivities" class="activity-item">
+          <div class="activity-icon">
+            <i [class]="activity.icon"></i>
+          </div>
+          <div class="activity-content">
+            <p class="activity-action">{{ activity.action }}</p>
+            <div class="activity-meta">
+              <span class="activity-time">{{ activity.time }}</span>
+              <span class="activity-user">par {{ activity.user }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="dashboard-section">
+      <div class="section-header">
+        <h2>Actions rapides</h2>
+      </div>
+      <div class="quick-actions">
+        <a class="quick-action-btn" routerLink="/inventory/operations">
+          <i class="fas fa-boxes"></i>
+          <span>Ajouter stock</span>
+        </a>
+        <a class="quick-action-btn" routerLink="/products">
+          <i class="fas fa-tags"></i>
+          <span>Créer produit</span>
+        </a>
+        <a class="quick-action-btn" routerLink="/orders">
+          <i class="fas fa-clipboard-list"></i>
+          <span>Nouvelle commande</span>
+        </a>
+        <a class="quick-action-btn" routerLink="/reports">
+          <i class="fas fa-chart-line"></i>
+          <span>Générer rapport</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

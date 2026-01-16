@@ -1,46 +1,16 @@
-
+<!-- app.component.html -->
 <div class="app-container">
-  <!-- Navbar -->
-  <nav class="navbar">
-    <div class="nav-content">
-      <div class="nav-brand">
-        <h2>{{ title }}</h2>
-      </div>
+  <app-sidebar></app-sidebar>
 
-      <ul class="nav-menu">
-        <li>
-          <a routerLink="/products"
-             routerLinkActive="active"
-             class="nav-link">
-            Produits
-          </a>
-        </li>
-        <li>
-          <a routerLink="/warehouses"
-             routerLinkActive="active"
-             class="nav-link">
-            Entrepôts
-          </a>
-        </li>
-        <!-- Ajoutez d'autres liens ici plus tard -->
-        <!-- <li>
-          <a routerLink="/orders"
-             routerLinkActive="active"
-             class="nav-link">
-            Commandes
-          </a>
-        </li> -->
-      </ul>
-    </div>
-  </nav>
+  <div class="main-content">
+    <app-header></app-header>
 
-  <!-- Contenu principal -->
-  <main class="main-content">
-    <router-outlet></router-outlet>
-  </main>
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
 
-  <!-- Footer (optionnel) -->
-  <footer class="footer">
-    <p>&copy; 2024 Digital Logistics Supply Chain Platform</p>
-  </footer>
+    <footer class="footer">
+      <p>&copy; 2024 Digital Logistics Supply Chain. Tous droits réservés.</p>
+    </footer>
+  </div>
 </div>
