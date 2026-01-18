@@ -1,0 +1,129 @@
+<!-- components/order-list/order-list.component.html -->
+<div class="order-list-container">
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-clipboard-list"></i> Gestion des Commandes</h1>
+      <p class="text-muted">Liste de toutes les commandes clients</p>
+    </div>
+    <button class="btn btn-primary" (click)="createOrder()">
+      <i class="fas fa-plus"></i> Nouvelle Commande
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (input)="onSearch()"
+        placeholder="Rechercher par client ou N° commande..."
+        class="form-control"
+      />
+    </div>
+
+    <div class="filter-group">
+      <label>Statut:</label>
+      <select [(ngModel)]="filterStatus" (change)="onFilterChange()" class="form-control">
+        <option value="ALL">Tous</option>
+        <option value="CREATED">Créées</option>
+        <option value="RESERVED">Réservées</option>
+        <option value="SHIPPED">Expédiées</option>
+        <option value="DELIVERED">Livrées</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Chargement des commandes...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="alert alert-danger">
+    <i class="fas fa-exclamation-circle"></i> {{ error }}
+    <button class="btn btn-sm btn-outline-danger ml-3" (click)="loadOrders()">
+      Réessayer
+    </button>
+  </div>
+
+  <!-- Orders Table -->
+  <div *ngIf="!loading && !error" class="table-container">
+    <table class="table">
+      <thead>
+      <tr>
+        <th>N° Commande</th>
+        <th>Client</th>
+        <th>Date Création</th>
+        <th>Montant Total</th>
+        <th>Lignes</th>
+        <th>Statut</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngIf="filteredOrders.length === 0">
+        <td colspan="7" class="text-center text-muted">
+          <i class="fas fa-inbox fa-3x mb-3"></i>
+          <p>Aucune commande trouvée</p>
+        </td>
+      </tr>
+      <tr *ngFor="let order of filteredOrders" (click)="viewOrder(order.id!)" class="clickable">
+        <td><strong>#{{ order.id }}</strong></td>
+        <td>
+          <i class="fas fa-user text-primary"></i>
+          {{ order.clientName || 'Client ' + order.clientId }}
+        </td>
+        <td>{{ formatDate(order.createdAt) }}</td>
+        <td class="text-right font-weight-bold">{{ formatCurrency(order.totalAmount) }}</td>
+        <td class="text-center">
+          <span class="badge badge-secondary">{{ order.orderLines?.length || 0 }}</span>
+        </td>
+        <td>
+            <span [class]="'badge ' + getStatusBadgeClass(order)">
+              {{ getStatusText(getOrderStatus(order)) }}
+            </span>
+        </td>
+        <td class="actions">
+          <button
+            class="btn btn-sm btn-info"
+            (click)="viewOrder(order.id!)"
+            title="Voir détails"
+          >
+            <i class="fas fa-eye"></i>
+          </button>
+          <button
+            *ngIf="getOrderStatus(order) === 'CREATED'"
+            class="btn btn-sm btn-warning"
+            (click)="editOrder(order.id!, $event)"
+            title="Modifier"
+          >
+            <i class="fas fa-edit"></i>
+          </button>
+          <button
+            *ngIf="getOrderStatus(order) === 'CREATED'"
+            class="btn btn-sm btn-danger"
+            (click)="deleteOrder(order.id!, $event)"
+            title="Supprimer"
+          >
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Summary -->
+  <div *ngIf="!loading && !error && filteredOrders.length > 0" class="summary-section">
+    <div class="summary-card">
+      <i class="fas fa-shopping-cart"></i>
+      <div>
+        <strong>{{ filteredOrders.length }}</strong>
+        <span>Commandes</span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,205 @@
+<!-- components/order-detail/order-detail.component.html -->
+<div class="order-detail-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <button class="btn-back" (click)="goBack()">
+        <i class="fas fa-arrow-left"></i> Retour
+      </button>
+      <h1>Commande #{{ order?.id }}</h1>
+      <span [class]="'badge ' + getStatusBadgeClass()">
+        {{ getStatusText(getOrderStatus()) }}
+      </span>
+    </div>
+    <div class="header-actions">
+      <button *ngIf="canReserve()" class="btn btn-warning" (click)="editOrder()">
+        <i class="fas fa-edit"></i> Modifier
+      </button>
+      <button *ngIf="canReserve()" class="btn btn-danger" (click)="deleteOrder()">
+        <i class="fas fa-trash"></i> Supprimer
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="alert alert-danger">
+    <i class="fas fa-exclamation-circle"></i> {{ error }}
+  </div>
+
+  <!-- Order Details -->
+  <div *ngIf="!loading && !error && order" class="content-grid">
+    <!-- Order Info -->
+    <div class="card">
+      <div class="card-header">
+        <i class="fas fa-info-circle"></i> Informations Générales
+      </div>
+      <div class="card-body">
+        <div class="info-row">
+          <span class="label">Client:</span>
+          <span class="value">{{ order.clientName || 'Client ' + order.clientId }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Date création:</span>
+          <span class="value">{{ formatDate(order.createdAt) }}</span>
+        </div>
+        <div class="info-row" *ngIf="order.reservedAt">
+          <span class="label">Date réservation:</span>
+          <span class="value">{{ formatDate(order.reservedAt) }}</span>
+        </div>
+        <div class="info-row" *ngIf="order.shippedAt">
+          <span class="label">Date expédition:</span>
+          <span class="value">{{ formatDate(order.shippedAt) }}</span>
+        </div>
+        <div class="info-row" *ngIf="order.deliveredAt">
+          <span class="label">Date livraison:</span>
+          <span class="value">{{ formatDate(order.deliveredAt) }}</span>
+        </div>
+        <div class="info-row total">
+          <span class="label">Montant Total:</span>
+          <span class="value">{{ formatCurrency(order.totalAmount) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Lines -->
+    <div class="card full-width">
+      <div class="card-header">
+        <i class="fas fa-list"></i> Lignes de Commande
+      </div>
+      <div class="card-body">
+        <table class="table">
+          <thead>
+          <tr>
+            <th>Produit</th>
+            <th>SKU</th>
+            <th>Quantité</th>
+            <th>Prix Unitaire</th>
+            <th>Total</th>
+            <th>Rupture</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let line of order.orderLines">
+            <td>{{ line.productName }}</td>
+            <td><code>{{ line.productSku }}</code></td>
+            <td class="text-center">{{ line.quantity }}</td>
+            <td class="text-right">{{ formatCurrency(line.unitPrice) }}</td>
+            <td class="text-right font-weight-bold">{{ formatCurrency(line.totalPrice) }}</td>
+            <td class="text-center">
+                <span *ngIf="line.backordered" class="badge badge-warning">
+                  <i class="fas fa-exclamation-triangle"></i> Oui
+                </span>
+              <span *ngIf="!line.backordered" class="badge badge-success">
+                  <i class="fas fa-check"></i> Non
+                </span>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="card full-width">
+      <div class="card-header">
+        <i class="fas fa-cogs"></i> Actions
+      </div>
+      <div class="card-body">
+        <div class="warehouse-selector">
+          <label>Entrepôt:</label>
+          <input type="number" [(ngModel)]="warehouseId" class="form-control" min="1" />
+        </div>
+
+        <div class="action-buttons">
+          <button
+            class="btn btn-info"
+            (click)="checkAvailability()"
+            [disabled]="processing"
+          >
+            <i class="fas fa-search"></i> Vérifier Disponibilité
+          </button>
+
+          <button
+            *ngIf="canReserve()"
+            class="btn btn-warning"
+            (click)="reserveOrder()"
+            [disabled]="processing"
+          >
+            <i class="fas fa-lock"></i> Réserver
+          </button>
+
+          <button
+            *ngIf="canShip()"
+            class="btn btn-primary"
+            (click)="shipOrder()"
+            [disabled]="processing"
+          >
+            <i class="fas fa-truck"></i> Expédier
+          </button>
+
+          <button
+            *ngIf="canDeliver()"
+            class="btn btn-success"
+            (click)="deliverOrder()"
+            [disabled]="processing"
+          >
+            <i class="fas fa-check-circle"></i> Livrer
+          </button>
+
+          <button
+            *ngIf="canCancel()"
+            class="btn btn-danger"
+            (click)="openCancelModal()"
+            [disabled]="processing"
+          >
+            <i class="fas fa-times-circle"></i> Annuler
+          </button>
+        </div>
+
+        <div *ngIf="processing" class="processing-message">
+          <div class="spinner-small"></div>
+          <span>Traitement en cours...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cancel Modal -->
+  <div *ngIf="showCancelModal" class="modal-overlay" (click)="closeCancelModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Annuler la Commande</h3>
+        <button class="btn-close" (click)="closeCancelModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <label>Raison de l'annulation:</label>
+        <textarea
+          [(ngModel)]="cancelReason"
+          class="form-control"
+          rows="4"
+          placeholder="Entrez la raison de l'annulation..."
+        ></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeCancelModal()">
+          Annuler
+        </button>
+        <button
+          class="btn btn-danger"
+          (click)="confirmCancel()"
+          [disabled]="!cancelReason.trim() || processing"
+        >
+          <i class="fas fa-times-circle"></i> Confirmer l'Annulation
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,255 @@
+<!-- components/order-form/order-form.component.html -->
+<div class="order-form-container">
+  <div class="page-header">
+    <div>
+      <h1>
+        <i class="fas fa-clipboard-list"></i>
+        {{ isEditMode ? 'Modifier la Commande' : 'Nouvelle Commande' }}
+      </h1>
+      <p class="text-muted">
+        {{ isEditMode ? 'Modifiez les détails de la commande' : 'Créez une nouvelle commande client' }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Loading Initial Data -->
+  <div *ngIf="(loadingClients || loadingProducts) && !loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Chargement des données...</p>
+  </div>
+
+  <!-- Loading Order -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Chargement de la commande...</p>
+  </div>
+
+  <!-- Error Alert -->
+  <div *ngIf="error" class="alert alert-danger">
+    <i class="fas fa-exclamation-circle"></i> {{ error }}
+    <button type="button" class="btn-close-alert" (click)="error = null">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <!-- Form -->
+  <form *ngIf="!loading && !loadingClients && !loadingProducts" (ngSubmit)="onSubmit()" class="order-form">
+    <!-- Client Selection -->
+    <div class="card">
+      <div class="card-header">
+        <i class="fas fa-user"></i> Informations Client
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label>Client <span class="required">*</span></label>
+          <select
+            [(ngModel)]="clientId"
+            name="clientId"
+            class="form-control"
+            required
+            [disabled]="clients.length === 0"
+          >
+            <option [ngValue]="null">
+              {{ clients.length === 0 ? 'Aucun client disponible' : 'Sélectionnez un client' }}
+            </option>
+            <option *ngFor="let client of clients" [ngValue]="client.id">
+              {{ client.username }} - {{ client.email }}
+            </option>
+          </select>
+          <small class="form-text text-muted" *ngIf="clients.length === 0">
+            <i class="fas fa-info-circle"></i> Aucun client (utilisateur avec rôle CLIENT) trouvé dans le système.
+          </small>
+          <small class="form-text text-muted" *ngIf="clients.length > 0">
+            {{ clients.length }} client(s) disponible(s)
+          </small>
+        </div>
+
+        <!-- Selected Client Info -->
+        <div *ngIf="clientId" class="selected-client-info">
+          <i class="fas fa-check-circle text-success"></i>
+          <strong>Client sélectionné:</strong> {{ getClientName(clientId) }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Lines -->
+    <div class="card">
+      <div class="card-header">
+        <i class="fas fa-list"></i> Lignes de Commande
+        <button
+          type="button"
+          class="btn btn-sm btn-success ml-auto"
+          (click)="addOrderLine()"
+          [disabled]="activeProducts.length === 0"
+        >
+          <i class="fas fa-plus"></i> Ajouter une ligne
+        </button>
+      </div>
+      <div class="card-body">
+        <!-- No Products Warning -->
+        <div *ngIf="activeProducts.length === 0" class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle"></i>
+          Aucun produit actif disponible. Veuillez activer des produits avant de créer une commande.
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="orderLines.length === 0 && activeProducts.length > 0" class="empty-state">
+          <i class="fas fa-inbox fa-3x"></i>
+          <p>Aucune ligne de commande</p>
+          <button type="button" class="btn btn-primary" (click)="addOrderLine()">
+            <i class="fas fa-plus"></i> Ajouter la première ligne
+          </button>
+        </div>
+
+        <!-- Order Lines List -->
+        <div *ngFor="let line of orderLines; let i = index" class="order-line">
+          <div class="line-header">
+            <span class="line-number">
+              <i class="fas fa-hashtag"></i> Ligne {{ i + 1 }}
+            </span>
+            <button
+              type="button"
+              class="btn btn-sm btn-danger"
+              (click)="removeOrderLine(i)"
+              [disabled]="orderLines.length === 1"
+              title="{{ orderLines.length === 1 ? 'Impossible de supprimer la dernière ligne' : 'Supprimer cette ligne' }}"
+            >
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+
+          <div class="line-content">
+            <!-- Product Selection -->
+            <div class="form-group">
+              <label>Produit <span class="required">*</span></label>
+              <select
+                [(ngModel)]="line.productId"
+                [name]="'productId_' + i"
+                (change)="onProductChange(i)"
+                class="form-control"
+                required
+              >
+                <option [ngValue]="null">Sélectionnez un produit</option>
+                <option *ngFor="let product of activeProducts" [ngValue]="product.id">
+                  {{ product.name }} ({{ product.code }})
+                  <span *ngIf="product.category"> - {{ product.category }}</span>
+                </option>
+              </select>
+
+              <!-- Product Info -->
+              <small class="form-text text-muted" *ngIf="line.productId">
+                <i class="fas fa-tag"></i> SKU: {{ getProductSku(line.productId) }}
+                <span *ngIf="getProductCategory(line.productId)">
+                  | <i class="fas fa-folder"></i> {{ getProductCategory(line.productId) }}
+                </span>
+              </small>
+            </div>
+
+            <!-- Quantity -->
+            <div class="form-group">
+              <label>Quantité <span class="required">*</span></label>
+              <input
+                type="number"
+                [(ngModel)]="line.quantity"
+                [name]="'quantity_' + i"
+                class="form-control"
+                min="1"
+                required
+              />
+            </div>
+
+            <!-- Unit Price -->
+            <div class="form-group">
+              <label>Prix Unitaire (MAD) <span class="required">*</span></label>
+              <input
+                type="number"
+                [(ngModel)]="line.unitPrice"
+                [name]="'unitPrice_' + i"
+                class="form-control"
+                min="0"
+                step="0.01"
+                required
+              />
+
+            </div>
+
+            <!-- Line Total -->
+            <div class="form-group">
+              <label>Total Ligne</label>
+              <div class="line-total">
+                <i class="fas fa-calculator"></i>
+                {{ getLineTotal(line).toFixed(2) }} MAD
+              </div>
+            </div>
+
+            <!-- Backordered Checkbox -->
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="line.backordered"
+                  [name]="'backordered_' + i"
+                />
+                <span>
+                  <i class="fas fa-exclamation-triangle text-warning"></i>
+                  En rupture de stock
+                </span>
+              </label>
+              <small class="form-text text-muted">
+                Cochez si le produit n'est pas disponible immédiatement
+              </small>
+            </div>
+          </div>
+
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="card summary-card" *ngIf="orderLines.length > 0">
+      <div class="card-header">
+        <i class="fas fa-receipt"></i> Récapitulatif
+      </div>
+      <div class="card-body">
+        <div class="summary-row">
+          <span><i class="fas fa-list-ol"></i> Nombre de lignes:</span>
+          <strong>{{ orderLines.length }}</strong>
+        </div>
+
+        <div class="summary-row total">
+          <span><i class="fas fa-money-bill-wave"></i> Total Général:</span>
+          <strong>{{ getGrandTotal().toFixed(2) }} MAD</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        (click)="cancel()"
+        [disabled]="submitting"
+      >
+        <i class="fas fa-times"></i> Annuler
+      </button>
+
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="submitting || clients.length === 0 || activeProducts.length === 0"
+      >
+        <i *ngIf="!submitting" class="fas fa-save"></i>
+        <div *ngIf="submitting" class="spinner-small"></div>
+        {{ submitting ? 'Enregistrement...' : (isEditMode ? 'Mettre à jour la commande' : 'Créer la commande') }}
+      </button>
+    </div>
+
+    <!-- Help Text -->
+    <div class="help-text">
+      <i class="fas fa-info-circle"></i>
+      <span class="required">*</span> Champs obligatoires
+    </div>
+  </form>
+</div>
