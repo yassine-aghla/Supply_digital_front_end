@@ -3,6 +3,9 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import {AuthService} from '../../services/auth.service';
+import {User} from '../../models/user.model';
+import {Subscription} from 'rxjs';
 
 interface MenuItem {
   title: string;
@@ -22,6 +25,8 @@ interface MenuItem {
 export class SidebarComponent implements OnInit {
   isCollapsed = false;
   activePath: string = '';
+  currentUser: User | null = null; // Ajoutez cette ligne
+  private userSubscription: Subscription | null = null;
 
   menuItems: MenuItem[] = [
     {
@@ -29,6 +34,17 @@ export class SidebarComponent implements OnInit {
       icon: 'fas fa-chart-line',
       path: ''
     },
+    {
+      title: 'Utilisateurs',
+      icon: 'fas fa-users',
+      path: '/users',
+      submenu: [
+        { title: 'Liste Utilisateurs', icon: 'fas fa-list', path: '/users' },
+        { title: 'Créer Utilisateur', icon: 'fas fa-user-plus', path: '/users/create' }
+      ],
+      isOpen: false
+    }
+    ,
     {
       title: 'Inventaire',
       icon: 'fas fa-boxes',
@@ -45,9 +61,19 @@ export class SidebarComponent implements OnInit {
       path: '/products'
     },
     {
+      title: 'Carriers',
+      icon: 'fas fa-truck',
+      path: '/carriers'
+    },
+    {
       title: 'Entrepôts',
       icon: 'fas fa-warehouse',
       path: '/warehouses'
+    },
+    {
+      title: 'shipments',
+      icon:'far fa-shipping-fast',
+      path: '/shipments'
     },
     {
       title: 'Commandes',
@@ -56,7 +82,7 @@ export class SidebarComponent implements OnInit {
     },
     {
       title: 'Fournisseurs',
-      icon: 'fas fa-truck',
+      icon: 'fas fa-user-tie',
       path: '/suppliers'
     },
     {
@@ -83,7 +109,7 @@ export class SidebarComponent implements OnInit {
     }
   ];
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private authService: AuthService) {}
 
   ngOnInit(): void {
     // Écouter les changements de route
@@ -97,6 +123,74 @@ export class SidebarComponent implements OnInit {
     // Initialiser l'état actif
     this.activePath = this.router.url;
     this.markParentActive(this.activePath);
+
+    console.log('Sidebar - AuthService état:', {
+      isAuthenticated: this.authService.isLoggedIn(),
+      currentUser: this.authService.getCurrentUser(),
+      hasToken: !!this.authService.getToken()
+    });
+
+    this.userSubscription = this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+    });
+
+    // Récupérer l'utilisateur actuel
+    this.currentUser = this.authService.getCurrentUser();
+  }
+
+  ngOnDestroy(): void {
+    // Nettoyer la souscription
+    if (this.userSubscription) {
+      this.userSubscription.unsubscribe();
+    }
+  }
+
+  // Méthode pour obtenir les initiales
+  getUserInitials(): string {
+    if (!this.currentUser) return 'U';
+
+    // Selon votre modèle User, utilisez firstName/lastName ou email
+    if (this.currentUser.username) {
+      return (this.currentUser.username.charAt(0)).toUpperCase();
+    }
+
+    // Fallback sur l'email
+    if (this.currentUser.email) {
+      const namePart = this.currentUser.email.split('@')[0];
+      return namePart.substring(0, 2).toUpperCase();
+    }
+
+    return 'U';
+  }
+
+  // Méthode pour obtenir le nom à afficher
+  getDisplayName(): string {
+    if (!this.currentUser) return 'Utilisateur';
+
+
+    if (this.currentUser.username ) {
+      return `${this.currentUser.username} `;
+    }
+
+    if (this.currentUser.email) {
+      const namePart = this.currentUser.email.split('@')[0];
+      return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+    }
+
+    return 'Utilisateur';
+  }
+
+  // Méthode pour traduire le rôle
+  getRoleDisplay(): string {
+    if (!this.currentUser) return 'Invité';
+
+    const roleTranslations: { [key: string]: string } = {
+      'ADMIN': 'Administrateur',
+      'WAREHOUSE_MANAGER': 'Manager Entrepôt',
+      'CLIENT': 'Client'
+    };
+
+    return roleTranslations[this.currentUser.role] || this.currentUser.role;
   }
 
   toggleSubmenu(menuItem: MenuItem): void {

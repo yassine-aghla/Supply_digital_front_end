@@ -1,16 +1,14 @@
 <!-- app.component.html -->
-<div class="app-container">
+<div *ngIf="showLayout">
   <app-sidebar></app-sidebar>
-
   <div class="main-content">
     <app-header></app-header>
-
-    <main class="page-content">
+    <main class="content-area">
       <router-outlet></router-outlet>
     </main>
-
-    <footer class="footer">
-      <p>&copy; 2024 Digital Logistics Supply Chain. Tous droits réservés.</p>
-    </footer>
   </div>
+</div>
+
+<div *ngIf="!showLayout">
+  <router-outlet></router-outlet>
 </div>

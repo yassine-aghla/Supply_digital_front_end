@@ -1,0 +1,249 @@
+<!-- pages/users/user-form.component.html -->
+<div class="user-form-container fade-in">
+  <div class="form-header">
+    <h1>
+      <i class="fas" [class.fa-user-edit]="isEditing" [class.fa-user-plus]="!isEditing"></i>
+      {{ isEditing ? 'Modifier l\'Utilisateur' : 'Créer un Nouvel Utilisateur' }}
+    </h1>
+    <button class="btn btn-secondary" (click)="onCancel()">
+      <i class="fas fa-arrow-left"></i> Retour
+    </button>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+    <button class="close-btn" (click)="error = null">×</button>
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+    <button class="close-btn" (click)="successMessage = null">×</button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>{{ isEditing ? 'Chargement...' : 'Création en cours...' }}</p>
+  </div>
+
+  <!-- Formulaire -->
+  <form *ngIf="!loading" (ngSubmit)="onSubmit()" #userForm="ngForm" class="user-form">
+    <div class="form-sections">
+      <!-- Informations de base -->
+      <div class="form-section">
+        <h2><i class="fas fa-id-card"></i> Informations de base</h2>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="username">
+              Nom d'utilisateur *
+              <span class="required-indicator">*</span>
+            </label>
+            <input
+              type="text"
+              id="username"
+              [(ngModel)]="userFormData.username"
+              name="username"
+              required
+              [class.is-invalid]="submitted && !userFormData.username"
+              class="form-control"
+              placeholder="Entrez le nom d'utilisateur"
+            />
+            <div *ngIf="submitted && !userFormData.username" class="invalid-feedback">
+              Le nom d'utilisateur est requis
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="email">
+              Email *
+              <span class="required-indicator">*</span>
+            </label>
+            <input
+              type="email"
+              id="email"
+              [(ngModel)]="userFormData.email"
+              name="email"
+              required
+              [class.is-invalid]="submitted && (!userFormData.email || !isValidEmail(userFormData.email))"
+              class="form-control"
+              placeholder="exemple@email.com"
+            />
+            <div *ngIf="submitted && (!userFormData.email || !isValidEmail(userFormData.email))" class="invalid-feedback">
+              Un email valide est requis
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="role">Rôle *</label>
+            <select
+              id="role"
+              [(ngModel)]="userFormData.role"
+              name="role"
+              required
+              class="form-control"
+            >
+              <option *ngFor="let roleOption of roles" [value]="roleOption">
+                {{ getRoleDisplayName(roleOption) }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="active">Statut</label>
+            <select
+              id="active"
+              [(ngModel)]="userFormData.active"
+              name="active"
+              class="form-control"
+            >
+              <option [ngValue]="true">Actif</option>
+              <option [ngValue]="false">Inactif</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mot de passe -->
+      <div class="form-section" *ngIf="!isEditing">
+        <h2><i class="fas fa-lock"></i> Mot de passe</h2>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="password">
+              Mot de passe *
+              <span class="required-indicator">*</span>
+            </label>
+            <div class="password-input-wrapper">
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                id="password"
+                [(ngModel)]="userFormData.password"
+                name="password"
+                required
+                [class.is-invalid]="submitted && (!userFormData.password || userFormData.password.length < 6)"
+                class="form-control"
+                placeholder="Minimum 6 caractères"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                (click)="togglePasswordVisibility()"
+                title="{{ showPassword ? 'Cacher' : 'Afficher' }}"
+              >
+                <i class="fas" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
+              </button>
+            </div>
+            <div *ngIf="submitted && (!userFormData.password || userFormData.password.length < 6)" class="invalid-feedback">
+              Le mot de passe doit contenir au moins 6 caractères
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPassword">
+              Confirmer le mot de passe *
+              <span class="required-indicator">*</span>
+            </label>
+            <div class="password-input-wrapper">
+              <input
+                [type]="showConfirmPassword ? 'text' : 'password'"
+                id="confirmPassword"
+                [(ngModel)]="userFormData.confirmPassword"
+                name="confirmPassword"
+                required
+                [class.is-invalid]="submitted && userFormData.password !== userFormData.confirmPassword"
+                class="form-control"
+                placeholder="Ressaisir le mot de passe"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                (click)="toggleConfirmPasswordVisibility()"
+                title="{{ showConfirmPassword ? 'Cacher' : 'Afficher' }}"
+              >
+                <i class="fas" [class.fa-eye]="!showConfirmPassword" [class.fa-eye-slash]="showConfirmPassword"></i>
+              </button>
+            </div>
+            <div *ngIf="submitted && userFormData.password !== userFormData.confirmPassword" class="invalid-feedback">
+              Les mots de passe ne correspondent pas
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mot de passe (édition) -->
+      <div class="form-section" *ngIf="isEditing">
+        <h2><i class="fas fa-lock"></i> Modifier le mot de passe (optionnel)</h2>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="passwordEdit">Nouveau mot de passe</label>
+            <div class="password-input-wrapper">
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                id="passwordEdit"
+                [(ngModel)]="userFormData.password"
+                name="passwordEdit"
+                [class.is-invalid]="submitted && userFormData.password && userFormData.password.length < 6"
+                class="form-control"
+                placeholder="Laissez vide pour ne pas modifier"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                (click)="togglePasswordVisibility()"
+                title="{{ showPassword ? 'Cacher' : 'Afficher' }}"
+              >
+                <i class="fas" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
+              </button>
+            </div>
+            <div *ngIf="submitted && userFormData.password && userFormData.password.length < 6" class="invalid-feedback">
+              Le mot de passe doit contenir au moins 6 caractères
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPasswordEdit">Confirmer le mot de passe</label>
+            <div class="password-input-wrapper">
+              <input
+                [type]="showConfirmPassword ? 'text' : 'password'"
+                id="confirmPasswordEdit"
+                [(ngModel)]="userFormData.confirmPassword"
+                name="confirmPasswordEdit"
+                [class.is-invalid]="submitted && userFormData.password !== userFormData.confirmPassword"
+                class="form-control"
+                placeholder="Ressaisir le mot de passe"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                (click)="toggleConfirmPasswordVisibility()"
+                title="{{ showConfirmPassword ? 'Cacher' : 'Afficher' }}"
+              >
+                <i class="fas" [class.fa-eye]="!showConfirmPassword" [class.fa-eye-slash]="showConfirmPassword"></i>
+              </button>
+            </div>
+            <div *ngIf="submitted && userFormData.password !== userFormData.confirmPassword" class="invalid-feedback">
+              Les mots de passe ne correspondent pas
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="loading">
+        <i class="fas" [class.fa-save]="isEditing" [class.fa-user-plus]="!isEditing"></i>
+        {{ isEditing ? 'Mettre à jour' : 'Créer l\'utilisateur' }}
+      </button>
+
+      <button type="button" class="btn btn-secondary" (click)="onCancel()" [disabled]="loading">
+        <i class="fas fa-times"></i> Annuler
+      </button>
+    </div>
+  </form>
+</div>

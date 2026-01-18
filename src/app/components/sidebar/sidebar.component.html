@@ -28,6 +28,8 @@
           <span class="menu-title" *ngIf="!isCollapsed">{{ item.title }}</span>
         </a>
 
+
+
         <div *ngIf="item.submenu" class="menu-item with-submenu" (click)="toggleSubmenu(item)">
           <div class="menu-item-content">
             <i [class]="item.icon" class="menu-icon"></i>

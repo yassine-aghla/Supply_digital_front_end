@@ -1,0 +1,213 @@
+<!-- carrier-list.component.html -->
+<div class="carrier-container">
+  <!-- Alert -->
+  <div *ngIf="alertMessage"
+       class="alert-box"
+       [class.alert-success]="alertType === 'success'"
+       [class.alert-error]="alertType === 'error'">
+    {{ alertMessage }}
+  </div>
+
+  <!-- Header -->
+  <div class="header-section">
+    <h1 class="page-title">Gestion des Transporteurs</h1>
+    <button (click)="openCreateForm()" class="btn btn-primary">
+      + Nouveau Transporteur
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="filter-grid">
+      <div class="filter-group">
+        <label>Rechercher</label>
+        <input type="text"
+               [(ngModel)]="searchTerm"
+               (ngModelChange)="applyFilters()"
+               placeholder="Nom, code ou email..."
+               class="form-input">
+      </div>
+      <div class="filter-group">
+        <label>Statut</label>
+        <select [(ngModel)]="selectedStatus"
+                (ngModelChange)="applyFilters()"
+                class="form-select">
+          <option value="ALL">Tous les statuts</option>
+          <option value="ACTIVE">Actif</option>
+          <option value="INACTIVE">Inactif</option>
+          <option value="SUSPENDED">Suspendu</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-section">
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+        <tr>
+          <th>Code</th>
+          <th>Nom</th>
+          <th>Contact</th>
+          <th>Taux de base</th>
+          <th>Capacité</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let carrier of paginatedCarriers">
+          <td>{{ carrier.code }}</td>
+          <td>{{ carrier.name }}</td>
+          <td>
+            <div>{{ carrier.contactEmail }}</div>
+            <div class="contact-phone">{{ carrier.contactPhone }}</div>
+          </td>
+          <td>{{ carrier.baseShippingRate | currency:'EUR' }}</td>
+          <td>{{ carrier.currentDailyShipments }}/{{ carrier.maxDailyCapacity }}</td>
+          <td>
+              <span class="status-badge"
+                    [class.status-active]="carrier.status === 'ACTIVE'"
+                    [class.status-inactive]="carrier.status === 'INACTIVE'"
+                    [class.status-suspended]="carrier.status === 'SUSPENDED'">
+                {{ carrier.status === 'ACTIVE' ? 'Actif' :
+                carrier.status === 'INACTIVE' ? 'Inactif' : 'Suspendu' }}
+              </span>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button (click)="openEditForm(carrier)" class="btn-action btn-edit">Modifier</button>
+              <button (click)="deleteCarrier(carrier.id!)" class="btn-action btn-delete">Supprimer</button>
+              <div class="status-dropdown">
+                <button class="btn-action">Statut ▼</button>
+                <div class="dropdown-menu">
+                  <button (click)="updateStatus(carrier, 'ACTIVE')">Actif</button>
+                  <button (click)="updateStatus(carrier, 'INACTIVE')">Inactif</button>
+                  <button (click)="updateStatus(carrier, 'SUSPENDED')">Suspendu</button>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-section">
+      <div class="pagination-info">
+        Affichage de {{ (currentPage - 1) * itemsPerPage + 1 }}
+        à {{ Math.min(currentPage * itemsPerPage, filteredCarriers.length) }}
+        sur {{ filteredCarriers.length }} résultats
+      </div>
+      <div class="pagination-controls">
+        <button (click)="changePage(currentPage - 1)"
+                [disabled]="currentPage === 1"
+                class="pagination-btn">
+          Précédent
+        </button>
+        <button *ngFor="let page of [].constructor(totalPages); let i = index"
+                (click)="changePage(i + 1)"
+                [class.active]="currentPage === i + 1"
+                class="pagination-btn">
+          {{ i + 1 }}
+        </button>
+        <button (click)="changePage(currentPage + 1)"
+                [disabled]="currentPage === totalPages"
+                class="pagination-btn">
+          Suivant
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Popup Form -->
+<div *ngIf="showCarrierForm" class="modal-overlay">
+  <div class="modal-container">
+    <!-- Header -->
+    <div class="modal-header">
+      <h3 class="modal-title">
+        {{ isEditMode ? 'Modifier le transporteur' : 'Nouveau transporteur' }}
+      </h3>
+      <button (click)="closeForm()" class="modal-close-btn">
+        ✕
+      </button>
+    </div>
+
+    <!-- Form -->
+    <form (ngSubmit)="saveCarrier()" class="modal-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Code *</label>
+          <input type="text" [(ngModel)]="currentCarrier.code" name="code" required
+                 class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nom *</label>
+          <input type="text" [(ngModel)]="currentCarrier.name" name="name" required
+                 class="form-input">
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Email *</label>
+          <input type="email" [(ngModel)]="currentCarrier.contactEmail" name="contactEmail" required
+                 class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Téléphone *</label>
+          <input type="tel" [(ngModel)]="currentCarrier.contactPhone" name="contactPhone" required
+                 class="form-input">
+        </div>
+      </div>
+
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label class="form-label">Taux de base (€) *</label>
+          <input type="number" step="0.01" [(ngModel)]="currentCarrier.baseShippingRate"
+                 name="baseShippingRate" required class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Capacité max/jour *</label>
+          <input type="number" [(ngModel)]="currentCarrier.maxDailyCapacity"
+                 name="maxDailyCapacity" required class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Livraisons actuelles</label>
+          <input type="number" [(ngModel)]="currentCarrier.currentDailyShipments"
+                 name="currentDailyShipments" class="form-input">
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Heure limite</label>
+          <input type="time" [(ngModel)]="currentCarrier.cutOffTime"
+                 name="cutOffTime" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Statut</label>
+          <select [(ngModel)]="currentCarrier.status" name="status"
+                  class="form-select">
+            <option value="ACTIVE">Actif</option>
+            <option value="INACTIVE">Inactif</option>
+            <option value="SUSPENDED">Suspendu</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="form-actions">
+        <button type="button" (click)="closeForm()" class="btn btn-secondary">
+          Annuler
+        </button>
+        <button type="submit" class="btn btn-primary">
+          {{ isEditMode ? 'Modifier' : 'Créer' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

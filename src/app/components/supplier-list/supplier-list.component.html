@@ -1,0 +1,207 @@
+<!-- components/supplier-list/supplier-list.component.html -->
+<div class="supplier-container">
+  <!-- Alert -->
+  <div *ngIf="alertMessage"
+       class="alert-box"
+       [class.alert-success]="alertType === 'success'"
+       [class.alert-error]="alertType === 'error'">
+    {{ alertMessage }}
+  </div>
+
+  <!-- Header -->
+  <div class="header-section">
+    <div>
+      <h1 class="page-title">Gestion des Fournisseurs</h1>
+      <p class="page-subtitle">Total: {{ totalSuppliers }} fournisseurs</p>
+    </div>
+    <div class="header-actions">
+      <button (click)="exportToCSV()" class="btn btn-export">
+        📥 Exporter CSV
+      </button>
+      <button (click)="openCreateForm()" class="btn btn-primary">
+        + Nouveau Fournisseur
+      </button>
+    </div>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="search-section">
+    <div class="search-box">
+      <input type="text"
+             [(ngModel)]="searchTerm"
+             (ngModelChange)="applyFilters()"
+             placeholder="Rechercher un fournisseur..."
+             class="search-input">
+      <span class="search-icon">🔍</span>
+    </div>
+    <div class="search-info">
+      {{ filteredSuppliers.length }} résultat(s) trouvé(s)
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-section">
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nom</th>
+          <th>Contact</th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let supplier of paginatedSuppliers">
+          <td class="supplier-id">
+            #{{ supplier.id }}
+          </td>
+          <td class="supplier-name">
+            <strong>{{ supplier.name }}</strong>
+          </td>
+          <td class="supplier-contact">
+            <div class="contact-info">
+              {{ supplier.contactInfo }}
+            </div>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button (click)="viewDetails(supplier)"
+                      class="btn-action btn-view"
+                      title="Voir les détails">
+                👁️ Détails
+              </button>
+              <button (click)="openEditForm(supplier)"
+                      class="btn-action btn-edit"
+                      title="Modifier">
+                ✏️ Modifier
+              </button>
+              <button (click)="deleteSupplier(supplier.id!)"
+                      class="btn-action btn-delete"
+                      title="Supprimer">
+                🗑️ Supprimer
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="filteredSuppliers.length === 0">
+          <td colspan="4" class="no-data">
+            <div class="no-data-content">
+              <div class="no-data-icon">📦</div>
+              <h3>Aucun fournisseur trouvé</h3>
+              <p *ngIf="searchTerm">Aucun résultat pour "{{ searchTerm }}"</p>
+              <p *ngIf="!searchTerm">Aucun fournisseur enregistré</p>
+              <button *ngIf="!searchTerm"
+                      (click)="openCreateForm()"
+                      class="btn btn-primary">
+                + Ajouter votre premier fournisseur
+              </button>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 1" class="pagination-section">
+      <div class="pagination-info">
+        Page {{ currentPage }} sur {{ totalPages }}
+        • Affichage de {{ (currentPage - 1) * itemsPerPage + 1 }}
+        à {{ Math.min(currentPage * itemsPerPage, filteredSuppliers.length) }}
+        sur {{ filteredSuppliers.length }} fournisseurs
+      </div>
+      <div class="pagination-controls">
+        <button (click)="changePage(1)"
+                [disabled]="currentPage === 1"
+                class="pagination-btn first-btn"
+                title="Première page">
+          ««
+        </button>
+        <button (click)="changePage(currentPage - 1)"
+                [disabled]="currentPage === 1"
+                class="pagination-btn prev-btn"
+                title="Page précédente">
+          «
+        </button>
+
+
+
+        <button (click)="changePage(currentPage + 1)"
+                [disabled]="currentPage === totalPages"
+                class="pagination-btn next-btn"
+                title="Page suivante">
+          »
+        </button>
+        <button (click)="changePage(totalPages)"
+                [disabled]="currentPage === totalPages"
+                class="pagination-btn last-btn"
+                title="Dernière page">
+          »»
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Popup Form -->
+<div *ngIf="showSupplierForm" class="modal-overlay">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3 class="modal-title">
+        {{ isEditMode ? 'Modifier le fournisseur' : 'Nouveau fournisseur' }}
+      </h3>
+      <button (click)="closeForm()" class="modal-close-btn">✕</button>
+    </div>
+
+    <form (ngSubmit)="saveSupplier()" class="modal-form">
+      <div class="form-group">
+        <label class="form-label">Nom du fournisseur *</label>
+        <input type="text"
+               [(ngModel)]="currentSupplier.name"
+               name="name"
+               required
+               class="form-input"
+               placeholder="Ex: Fournisseur SA">
+        <div class="form-hint">
+          Nom complet ou raison sociale du fournisseur
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Informations de contact *</label>
+        <textarea [(ngModel)]="currentSupplier.contactInfo"
+                  name="contactInfo"
+                  required
+                  class="form-textarea"
+                  rows="4"
+                  placeholder="Adresse, téléphone, email, contact principal..."></textarea>
+        <div class="form-hint">
+          Toutes les informations nécessaires pour contacter le fournisseur
+        </div>
+      </div>
+
+      <div class="form-validation">
+        <div class="validation-item" [class.valid]="currentSupplier.name.length >= 2">
+          ✓ Nom doit contenir au moins 2 caractères
+        </div>
+        <div class="validation-item" [class.valid]="currentSupplier.contactInfo.length >= 10">
+          ✓ Contact doit contenir au moins 10 caractères
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button"
+                (click)="closeForm()"
+                class="btn btn-secondary">
+          Annuler
+        </button>
+        <button type="submit"
+                [disabled]="currentSupplier.name.length < 2 || currentSupplier.contactInfo.length < 10"
+                class="btn btn-primary">
+          {{ isEditMode ? 'Mettre à jour' : 'Créer' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

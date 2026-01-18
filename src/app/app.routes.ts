@@ -1,67 +1,83 @@
+// app.routes.ts
 import { Routes } from '@angular/router';
-import { ProductListComponent } from './components/product-list/product-list.component';
-import {WarehouseListComponent} from './components/warehouse-list/warehouse-list.component';
-import { InventoryListComponent } from './components/inventory-list/inventory-list.component';
-import { InventoryOperationsComponent } from './components/inventory-operations/inventory-operations.component';
-import {DashboardComponent} from './components/dashboard/dashboard.component';
+import { AuthGuard } from './guards/auth.guard';
+import { Role } from './models/user.model';
+
 export const routes: Routes = [
-  // Route par défaut - redirige vers /products
+  // Public routes
+  {
+    path: 'login',
+    loadComponent: () => import('./components/auth/login/login.component').then(m => m.LoginComponent)
+  },
+
+  // Protected routes (require authentication)
   {
     path: '',
-    component:DashboardComponent,
+    canActivate: [AuthGuard],
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent)
+      },
+      {
+        path: 'users',
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./components/user-list/user-list.component').then(m => m.UserListComponent)
+          },
+          {
+            path: 'create',
+            loadComponent: () => import('./components/user-form/user-form.component').then(m => m.UserFormComponent)
+          },
+          {
+            path: 'edit/:id',
+            loadComponent: () => import('./components/user-form/user-form.component').then(m => m.UserFormComponent)
+          }
+        ]
+      },
+      {
+        path: 'inventory',
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./components/inventory-list/inventory-list.component').then(m => m.InventoryListComponent)
+          },
+          {
+            path: 'operations',
+            loadComponent: () => import('./components/inventory-operations/inventory-operations.component').then(m => m.InventoryOperationsComponent)
+          }
+        ]
+      },
+      {
+        path: 'products',
+        loadComponent: () => import('./components/product-list/product-list.component').then(m => m.ProductListComponent)
+      },
+      {
+        path: 'carriers',
+        loadComponent: () => import('./components/carrier-list/carrier-list.component').then(m => m.CarrierListComponent)
+      },
+      {
+        path: 'shipments',
+        loadComponent: () => import('./components/shipment-list/shipment-list.component')
+          .then(m => m.ShipmentListComponent)
+      },
+      {
+        path: 'suppliers',
+        loadComponent: () => import('./components/supplier-list/supplier-list.component')
+          .then(m => m.SupplierListComponent)
+      },
+    ]
+  },
+
+  // Redirect
+  {
+    path: '',
+    redirectTo: '/dashboard',
     pathMatch: 'full'
   },
-  // Route pour la liste des produits
-  {
-    path: 'products',
-    component: ProductListComponent,
-    title: 'Liste des Produits'
-  },
-  {
-    path:'warehouses',
-    component:WarehouseListComponent,
-    title:'Liste des intropots'
-  },
-  {
-    path: 'inventory',
-    component: InventoryListComponent,
-    title: 'Gestion des Inventaires'
-  },
-
-  // Route pour les opérations d'inventaire
-  {
-    path: 'inventory/operations',
-    component: InventoryOperationsComponent,
-    title: 'Opérations d\'Inventaire'
-  },
-
-
-
-
-  // Route pour créer un nouveau produit (à créer plus tard)
-  // {
-  //   path: 'products/new',
-  //   component: ProductFormComponent,
-  //   title: 'Nouveau Produit'
-  // },
-
-  // Route pour modifier un produit (à créer plus tard)
-  // {
-  //   path: 'products/:id/edit',
-  //   component: ProductFormComponent,
-  //   title: 'Modifier Produit'
-  // },
-
-  // Route pour voir les détails d'un produit (à créer plus tard)
-  // {
-  //   path: 'products/:id',
-  //   component: ProductDetailComponent,
-  //   title: 'Détails du Produit'
-  // },
-
-  // Route 404 - page non trouvée
   {
     path: '**',
-    redirectTo: '/products'
+    redirectTo: '/dashboard'
   }
 ];

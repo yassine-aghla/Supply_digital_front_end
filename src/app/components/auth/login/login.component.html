@@ -1,0 +1,88 @@
+<!-- pages/auth/login.component.html -->
+<div class="login-container">
+  <div class="login-card fade-in">
+    <div class="login-header">
+      <div class="logo">
+        <i class="fas fa-boxes"></i>
+        <h1>Digital Logistics</h1>
+      </div>
+      <p class="subtitle">Connectez-vous à votre compte</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
+      <!-- Messages -->
+      <div *ngIf="error" class="alert alert-error">
+        {{ error }}
+        <button type="button" class="close-btn" (click)="error = null">×</button>
+      </div>
+
+      <!-- Champs du formulaire -->
+      <div class="form-group">
+        <label for="email">
+          <i class="fas fa-user"></i> Nom d'utilisateur
+        </label>
+        <input
+          type="text"
+          id="email"
+          [(ngModel)]="credentials.email"
+          name="email"
+          required
+          class="form-control"
+          placeholder="Entrez votre nom d'utilisateur"
+          autocomplete="email"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password">
+          <i class="fas fa-lock"></i> Mot de passe
+        </label>
+        <div class="password-input-wrapper">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            id="password"
+            [(ngModel)]="credentials.password"
+            name="password"
+            required
+            class="form-control"
+            placeholder="Entrez votre mot de passe"
+            autocomplete="current-password"
+          />
+          <button
+            type="button"
+            class="password-toggle"
+            (click)="togglePasswordVisibility()"
+            title="{{ showPassword ? 'Cacher' : 'Afficher' }}"
+          >
+            <i class="fas" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Souvenir de moi -->
+      <div class="remember-me">
+        <label class="checkbox-label">
+          <input type="checkbox" name="remember" />
+          <span class="checkmark"></span>
+          Se souvenir de moi
+        </label>
+        <a href="#" class="forgot-password">Mot de passe oublié ?</a>
+      </div>
+
+      <!-- Bouton de connexion -->
+      <button
+        type="submit"
+        class="btn btn-primary btn-block"
+        [disabled]="loading || !credentials.email || !credentials.password"
+      >
+        <i class="fas" [class.fa-sign-in-alt]="!loading" [class.fa-spinner fa-spin]="loading"></i>
+        {{ loading ? 'Connexion...' : 'Se connecter' }}
+      </button>
+    </form>
+
+    <!-- Footer -->
+    <div class="login-footer">
+      <p>© 2024 Digital Logistics Supply Chain. Tous droits réservés.</p>
+    </div>
+  </div>
+</div>
