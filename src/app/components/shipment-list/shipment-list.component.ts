@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ShipmentService, Shipment, ShipmentCreateDTO, ShipmentUpdateDTO } from '../../services/shipment.service';
 import { CarrierService, Carrier } from '../../services/carrier.service';
+import {forkJoin} from 'rxjs';
 
 @Component({
   selector: 'app-shipment-list',
@@ -45,10 +46,33 @@ export class ShipmentListComponent implements OnInit {
     private carrierService: CarrierService
   ) {}
 
-  ngOnInit() {
-    this.loadShipments();
-    this.loadCarriers();
-  }
+
+
+ngOnInit() {
+  forkJoin({
+    shipments: this.shipmentService.getAll(),
+    carriers: this.carrierService.getAll()
+  }).subscribe({
+    next: (result) => {
+      this.shipments = result.shipments;
+      this.carriers = result.carriers;
+      this.filteredShipments = [...this.shipments];
+      this.applyFilters();
+
+      // Debug: vérifier la correspondance
+      const missingCarriers = this.shipments
+        .filter(s => !this.carriers.some(c => c.id === s.carrierId))
+        .map(s => s.carrierId);
+
+      if (missingCarriers.length > 0) {
+        console.warn('IDs de transporteurs manquants:', [...new Set(missingCarriers)]);
+      }
+    },
+    error: (error) => {
+      this.showAlert('Erreur lors du chargement des données', 'error');
+    }
+  });
+}
 
   loadShipments() {
     this.shipmentService.getAll().subscribe({

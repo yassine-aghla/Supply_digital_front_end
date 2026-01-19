@@ -1,0 +1,126 @@
+<!-- components/purchase-order-list/purchase-order-list.component.html -->
+<div class="purchase-order-list-container">
+  <div class="page-header">
+    <div>
+      <h1><i class="fas fa-file-invoice"></i> Bons de Commande Fournisseurs</h1>
+      <p class="text-muted">Liste de tous les bons de commande d'approvisionnement</p>
+    </div>
+    <button class="btn btn-primary" (click)="createOrder()">
+      <i class="fas fa-plus"></i> Nouveau Bon de Commande
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (input)="onSearch()"
+        placeholder="Rechercher par fournisseur ou N°..."
+        class="form-control"
+      />
+    </div>
+
+    <div class="filter-group">
+      <label>Statut:</label>
+      <select [(ngModel)]="filterStatus" (change)="onFilterChange()" class="form-control">
+        <option value="ALL">Tous</option>
+        <option [value]="PurchaseOrderStatus.PENDING">En attente</option>
+        <option [value]="PurchaseOrderStatus.APPROVED">Approuvées</option>
+        <option [value]="PurchaseOrderStatus.RECEIVED">Reçues</option>
+        <option [value]="PurchaseOrderStatus.CANCELLED">Annulées</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Chargement des bons de commande...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="alert alert-danger">
+    <i class="fas fa-exclamation-circle"></i> {{ error }}
+    <button class="btn btn-sm btn-outline-danger ml-3" (click)="loadOrders()">
+      Réessayer
+    </button>
+  </div>
+
+  <!-- Orders Table -->
+  <div *ngIf="!loading && !error" class="table-container">
+    <table class="table">
+      <thead>
+      <tr>
+        <th>N° BC</th>
+        <th>Fournisseur</th>
+        <th>Gestionnaire</th>
+        <th>Date Création</th>
+        <th>Livraison Prévue</th>
+        <th>Lignes</th>
+        <th>Total</th>
+        <th>Statut</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngIf="filteredOrders.length === 0">
+        <td colspan="9" class="text-center text-muted">
+          <i class="fas fa-inbox fa-3x mb-3"></i>
+          <p>Aucun bon de commande trouvé</p>
+        </td>
+      </tr>
+      <tr *ngFor="let order of filteredOrders" (click)="viewOrder(order.id!)" class="clickable">
+        <td><strong>#{{ order.id }}</strong></td>
+        <td>
+          <i class="fas fa-truck text-primary"></i>
+          {{ order.supplierName || 'Fournisseur ' + order.supplierId }}
+        </td>
+        <td>
+          <i class="fas fa-user-tie text-success"></i>
+          {{ order.warehouseManagerName || 'Manager ' + order.warehouseManagerId }}
+        </td>
+        <td>{{ formatDate(order.createdAt) }}</td>
+        <td>
+            <span class="expected-delivery">
+              <i class="fas fa-calendar-alt"></i>
+              {{ formatDate(order.expectedDelivery) }}
+            </span>
+        </td>
+        <td class="text-center">
+          <span class="badge badge-secondary">{{ getLineCount(order) }}</span>
+        </td>
+        <td class="text-right font-weight-bold">
+          {{ calculateTotal(order).toFixed(2) }} MAD
+        </td>
+        <td>
+            <span [class]="'badge ' + getStatusBadgeClass(order)">
+              {{ getStatusText(order.status) }}
+            </span>
+        </td>
+        <td class="actions">
+          <button
+            class="btn btn-sm btn-info"
+            (click)="viewOrder(order.id!)"
+            title="Voir détails"
+          >
+            <i class="fas fa-eye"></i>
+          </button>
+          <button
+            *ngIf="order.status === PurchaseOrderStatus.PENDING"
+            class="btn btn-sm btn-danger"
+            (click)="deleteOrder(order.id!, $event)"
+            title="Supprimer"
+          >
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Summary -->
+</div>

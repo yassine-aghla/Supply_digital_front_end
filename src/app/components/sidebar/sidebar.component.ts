@@ -32,7 +32,7 @@ export class SidebarComponent implements OnInit {
     {
       title: 'Dashboard',
       icon: 'fas fa-chart-line',
-      path: ''
+      path: '/dashboard'
     },
     {
       title: 'Utilisateurs',
@@ -56,6 +56,16 @@ export class SidebarComponent implements OnInit {
       isOpen: false
     },
     {
+      title: 'Orders',
+      icon: 'fas fa-clipboard-list',
+      path: '/sales-orders',
+      submenu: [
+        { title: 'sales-orders', icon: 'fas fa-clipboard-list', path: '/sales-orders' },
+        { title: 'purchase-orders', icon: 'fas fa-clipboard-list', path: '/purchase-orders' }
+      ],
+      isOpen: false
+    },
+    {
       title: 'Produits',
       icon: 'fas fa-tags',
       path: '/products'
@@ -74,11 +84,6 @@ export class SidebarComponent implements OnInit {
       title: 'shipments',
       icon:'far fa-shipping-fast',
       path: '/shipments'
-    },
-    {
-      title: 'Commandes',
-      icon: 'fas fa-clipboard-list',
-      path: '/orders'
     },
     {
       title: 'Fournisseurs',
@@ -105,6 +110,7 @@ export class SidebarComponent implements OnInit {
         { title: 'Permissions', icon: 'fas fa-shield-alt', path: '/settings/permissions' },
         { title: 'Configuration', icon: 'fas fa-wrench', path: '/settings/config' }
       ],
+
       isOpen: false
     }
   ];

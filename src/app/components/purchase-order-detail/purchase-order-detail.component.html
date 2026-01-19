@@ -1,0 +1,310 @@
+<!-- components/purchase-order-detail/purchase-order-detail.component.html -->
+<div class="purchase-order-detail-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <button class="btn-back" (click)="goBack()">
+        <i class="fas fa-arrow-left"></i> Retour
+      </button>
+      <h1>Bon de Commande #{{ order?.id }}</h1>
+      <span [class]="'badge ' + getStatusBadgeClass()">
+        {{ getStatusText(order?.status || '') }}
+      </span>
+    </div>
+    <div class="header-actions">
+      <button
+        *ngIf="order?.status === PurchaseOrderStatus.PENDING"
+        class="btn btn-danger"
+        (click)="deleteOrder()"
+      >
+        <i class="fas fa-trash"></i> Supprimer
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="alert alert-danger">
+    <i class="fas fa-exclamation-circle"></i> {{ error }}
+  </div>
+
+  <!-- Order Details -->
+  <div *ngIf="!loading && !error && order" class="content-grid">
+    <!-- Order Info -->
+    <div class="card">
+      <div class="card-header">
+        <i class="fas fa-info-circle"></i> Informations Générales
+      </div>
+      <div class="card-body">
+        <div class="info-row">
+          <span class="label">
+            <i class="fas fa-truck text-primary"></i> Fournisseur:
+          </span>
+          <span class="value">{{ order.supplierName || 'Fournisseur ' + order.supplierId }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">
+            <i class="fas fa-user-tie text-success"></i> Gestionnaire:
+          </span>
+          <span class="value">{{ order.warehouseManagerName || 'Manager ' + order.warehouseManagerId }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">
+            <i class="fas fa-clock"></i> Date création:
+          </span>
+          <span class="value">{{ formatDate(order.createdAt) }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">
+            <i class="fas fa-calendar-alt"></i> Livraison prévue:
+          </span>
+          <span class="value expected-date">{{ formatDate(order.expectedDelivery) }}</span>
+        </div>
+        <div class="info-row total">
+          <span class="label">
+            <i class="fas fa-money-bill-wave"></i> Montant Total:
+          </span>
+          <span class="value">{{ formatCurrency(calculateTotal()) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Timeline -->
+    <div class="card">
+      <div class="card-header">
+        <i class="fas fa-stream"></i> Statut
+      </div>
+      <div class="card-body">
+        <div class="timeline">
+          <div class="timeline-item" [class.active]="order.status === PurchaseOrderStatus.PENDING">
+            <div class="timeline-marker">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="timeline-content">
+              <strong>En attente</strong>
+              <p class="text-muted">Bon de commande créé</p>
+            </div>
+          </div>
+
+          <div class="timeline-item" [class.active]="order.status === PurchaseOrderStatus.APPROVED || order.status === PurchaseOrderStatus.RECEIVED">
+            <div class="timeline-marker">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="timeline-content">
+              <strong>Approuvée</strong>
+              <p class="text-muted">Commande validée</p>
+            </div>
+          </div>
+
+          <div class="timeline-item" [class.active]="order.status === PurchaseOrderStatus.RECEIVED">
+            <div class="timeline-marker">
+              <i class="fas fa-box"></i>
+            </div>
+            <div class="timeline-content">
+              <strong>Reçue</strong>
+              <p class="text-muted">Marchandise réceptionnée</p>
+            </div>
+          </div>
+
+          <div class="timeline-item cancelled" [class.active]="order.status === PurchaseOrderStatus.CANCELLED">
+            <div class="timeline-marker">
+              <i class="fas fa-times-circle"></i>
+            </div>
+            <div class="timeline-content">
+              <strong>Annulée</strong>
+              <p class="text-muted">Commande annulée</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Lines -->
+    <div class="card full-width">
+      <div class="card-header">
+        <i class="fas fa-list"></i> Lignes de Commande
+      </div>
+      <div class="card-body">
+        <table class="table">
+          <thead>
+          <tr>
+            <th>Produit</th>
+            <th>SKU</th>
+            <th class="text-center">Quantité</th>
+            <th class="text-right">Prix Unitaire</th>
+            <th class="text-right">Total</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let line of order.orderLines">
+            <td>
+              <i class="fas fa-box text-primary"></i>
+              {{ line.productName || 'Produit ' + line.productId }}
+            </td>
+            <td><code>{{ line.productSku }}</code></td>
+            <td class="text-center">
+              <span class="quantity-badge">{{ line.quantity }}</span>
+            </td>
+            <td class="text-right">{{ formatCurrency(line.unitPrice) }}</td>
+            <td class="text-right font-weight-bold">{{ formatCurrency(line.lineTotal) }}</td>
+          </tr>
+          </tbody>
+          <tfoot>
+          <tr class="total-row">
+            <td colspan="4" class="text-right"><strong>Total Général:</strong></td>
+            <td class="text-right font-weight-bold total-amount">
+              {{ formatCurrency(calculateTotal()) }}
+            </td>
+          </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="card full-width">
+      <div class="card-header">
+        <i class="fas fa-cogs"></i> Actions
+      </div>
+      <div class="card-body">
+        <div class="warehouse-selector" *ngIf="canReceive()">
+          <label>
+            <i class="fas fa-warehouse"></i> Entrepôt de réception:
+          </label>
+          <input
+            type="number"
+            [(ngModel)]="warehouseId"
+            class="form-control"
+            min="1"
+            placeholder="ID de l'entrepôt"
+          />
+          <small class="form-text text-muted">
+            L'entrepôt où la marchandise sera réceptionnée
+          </small>
+        </div>
+
+        <div class="action-buttons">
+          <!-- Approve Button -->
+          <button
+            *ngIf="canApprove()"
+            class="btn btn-primary"
+            (click)="approvePurchaseOrder()"
+            [disabled]="processing"
+          >
+            <i class="fas fa-check-circle"></i> Approuver
+          </button>
+
+          <!-- Check Reception Status -->
+          <button
+            class="btn btn-info"
+            (click)="checkReceptionStatus()"
+            [disabled]="processing"
+          >
+            <i class="fas fa-clipboard-check"></i> Vérifier Statut Réception
+          </button>
+
+          <!-- Check Stock Availability -->
+          <button
+            *ngIf="canReceive()"
+            class="btn btn-secondary"
+            (click)="checkStockAvailability()"
+            [disabled]="processing"
+          >
+            <i class="fas fa-boxes"></i> Vérifier Stock
+          </button>
+
+          <!-- Receive Full Order -->
+          <button
+            *ngIf="canReceive()"
+            class="btn btn-success"
+            (click)="receiveFullOrder()"
+            [disabled]="processing"
+          >
+            <i class="fas fa-box-open"></i> Recevoir Commande Complète
+          </button>
+
+          <!-- Cancel Button -->
+          <button
+            *ngIf="canCancel()"
+            class="btn btn-danger"
+            (click)="openCancelModal()"
+            [disabled]="processing"
+          >
+            <i class="fas fa-times-circle"></i> Annuler
+          </button>
+        </div>
+
+        <!-- Processing Message -->
+        <div *ngIf="processing" class="processing-message">
+          <div class="spinner-small"></div>
+          <span>Traitement en cours...</span>
+        </div>
+
+        <!-- Help Text -->
+        <div class="help-section" *ngIf="!processing">
+          <div class="help-item" *ngIf="canApprove()">
+            <i class="fas fa-info-circle text-primary"></i>
+            <span>Approuvez le bon de commande pour permettre sa réception</span>
+          </div>
+          <div class="help-item" *ngIf="canReceive()">
+            <i class="fas fa-info-circle text-success"></i>
+            <span>Après réception, le stock de l'entrepôt sera automatiquement mis à jour</span>
+          </div>
+          <div class="help-item" *ngIf="order.status === PurchaseOrderStatus.RECEIVED">
+            <i class="fas fa-check-circle text-success"></i>
+            <span>Cette commande a été reçue et le stock a été mis à jour</span>
+          </div>
+          <div class="help-item" *ngIf="order.status === PurchaseOrderStatus.CANCELLED">
+            <i class="fas fa-times-circle text-danger"></i>
+            <span>Cette commande a été annulée</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cancel Modal -->
+  <div *ngIf="showCancelModal" class="modal-overlay" (click)="closeCancelModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>
+          <i class="fas fa-times-circle text-danger"></i>
+          Annuler le Bon de Commande
+        </h3>
+        <button class="btn-close" (click)="closeCancelModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <label>Raison de l'annulation <span class="required">*</span></label>
+        <textarea
+          [(ngModel)]="cancelReason"
+          class="form-control"
+          rows="4"
+          placeholder="Entrez la raison de l'annulation..."
+          autofocus
+        ></textarea>
+        <small class="form-text text-muted">
+          Cette raison sera enregistrée avec l'annulation
+        </small>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeCancelModal()">
+          <i class="fas fa-times"></i> Annuler
+        </button>
+        <button
+          class="btn btn-danger"
+          (click)="confirmCancel()"
+          [disabled]="!cancelReason.trim() || processing"
+        >
+          <i class="fas fa-times-circle"></i> Confirmer l'Annulation
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

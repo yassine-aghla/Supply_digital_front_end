@@ -54,6 +54,10 @@ export const routes: Routes = [
         loadComponent: () => import('./components/product-list/product-list.component').then(m => m.ProductListComponent)
       },
       {
+        path: 'warehouses',
+        loadComponent: () => import('./components/warehouse-list/warehouse-list.component').then(m => m.WarehouseListComponent)
+      },
+      {
         path: 'carriers',
         loadComponent: () => import('./components/carrier-list/carrier-list.component').then(m => m.CarrierListComponent)
       },
@@ -70,7 +74,7 @@ export const routes: Routes = [
     ]
   },
   {
-    path: 'orders',
+    path: 'sales-orders',
     children: [
       {
         path: '',
@@ -87,6 +91,26 @@ export const routes: Routes = [
       {
         path: ':id',
         loadComponent: () => import('./components/order-detail/order-detail.component').then(m => m.OrderDetailComponent)
+      }
+    ]
+  },
+  {
+    path: 'purchase-orders',
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./components/purchase-order-list/purchase-order-list.component')
+          .then(m => m.PurchaseOrderListComponent)
+      },
+      {
+        path: 'create',
+        loadComponent: () => import('./components/purchase-order-form/purchase-order-form.component')
+          .then(m => m.PurchaseOrderFormComponent)
+      },
+      {
+        path: ':id',
+        loadComponent: () => import('./components/purchase-order-detail/purchase-order-detail.component')
+          .then(m => m.PurchaseOrderDetailComponent)
       }
     ]
   },
