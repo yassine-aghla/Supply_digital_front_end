@@ -88,16 +88,16 @@ export class OrderListComponent implements OnInit {
   }
 
   viewOrder(id: number): void {
-    this.router.navigate(['/orders', id]);
+    this.router.navigate(['/sales-orders', id]);
   }
 
   createOrder(): void {
-    this.router.navigate(['/orders/create']);
+    this.router.navigate(['/sales-orders/create']);
   }
 
   editOrder(id: number, event: Event): void {
     event.stopPropagation();
-    this.router.navigate(['/orders/edit', id]);
+    this.router.navigate(['/sales-orders/edit', id]);
   }
 
   deleteOrder(id: number, event: Event): void {

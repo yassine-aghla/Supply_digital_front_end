@@ -16,6 +16,10 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     children: [
       {
+        path: 'client-home',
+        loadComponent: () => import('./components/client-home/client-home.component').then(m => m.ClientHomeComponent)
+      },
+      {
         path: 'dashboard',
         loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent)
       },

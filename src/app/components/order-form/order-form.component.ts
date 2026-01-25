@@ -240,7 +240,7 @@ export class OrderFormComponent implements OnInit {
 
   cancel(): void {
     if (confirm('Êtes-vous sûr de vouloir annuler ? Les modifications non enregistrées seront perdues.')) {
-      this.router.navigate(['/orders']);
+      this.router.navigate(['/sales-orders']);
     }
   }
 

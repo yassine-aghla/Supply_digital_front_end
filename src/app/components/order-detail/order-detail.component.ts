@@ -203,7 +203,7 @@ export class OrderDetailComponent implements OnInit {
         this.processing = false;
         this.closeCancelModal();
         alert(result.message);
-        this.router.navigate(['/orders']);
+        this.router.navigate(['/sales-orders']);
       },
       error: (err) => {
         this.processing = false;
@@ -215,7 +215,7 @@ export class OrderDetailComponent implements OnInit {
 
   editOrder(): void {
     if (this.order?.id) {
-      this.router.navigate(['/orders/edit', this.order.id]);
+      this.router.navigate(['/sales-orders/edit', this.order.id]);
     }
   }
 
@@ -235,7 +235,7 @@ export class OrderDetailComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/orders']);
+    this.router.navigate(['/sales-orders']);
   }
 
   formatDate(date: string | undefined): string {
