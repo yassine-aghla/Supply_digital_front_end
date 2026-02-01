@@ -25,8 +25,9 @@ export interface SalesOrder {
 }
 
 export interface SalesOrderCreate {
-  clientId: number;
   orderLines: SalesOrderLineCreate[];
+  deliveryAddress?: string;
+  notes?: string;
 }
 
 export interface SalesOrderLineCreate {

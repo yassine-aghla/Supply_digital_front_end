@@ -22,7 +22,10 @@ export class OrderService {
     return this.http.post<SalesOrder>(this.apiUrl, orderData);
   }
 
-// order.service.ts - modifiez getMyOrders()
+  createOrderForClient(orderData: any): Observable<SalesOrder> {
+    return this.http.post<SalesOrder>(`${this.apiUrl}/client/create`, orderData);
+  }
+
   getMyOrders(): Observable<SalesOrder[]> {
     // Essayez différents champs pour l'ID
     const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
@@ -35,7 +38,6 @@ export class OrderService {
       throw new Error('User email not found');
     }
 
-    // Si votre backend accepte les emails, utilisez-le
     return this.http.get<SalesOrder[]>(`${this.apiUrl}/client/email/${email}`);
   }
 
@@ -60,7 +62,6 @@ export class OrderService {
     if (order.reservedAt) return OrderStatus.RESERVED;
     return OrderStatus.CREATED;
   }
-  // Méthodes utilitaires pour l'affichage
   getOrderStatusColor(status: string): string {
     const colors: { [key: string]: string } = {
       'CREATED': 'bg-yellow-100 text-yellow-800',

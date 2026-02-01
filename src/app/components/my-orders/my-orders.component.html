@@ -92,12 +92,7 @@
             class="btn btn-secondary">
             Voir détails
           </button>
-          <button
-            *ngIf="canCancelOrder(order)"
-            (click)="cancelOrder(order)"
-            class="btn btn-danger">
-            Annuler
-          </button>
+
         </div>
       </div>
     </div>
@@ -236,12 +231,7 @@
         <button (click)="closeOrderDetails()" class="btn btn-secondary">
           Fermer
         </button>
-        <button
-          *ngIf="canCancelOrder(selectedOrder)"
-          (click)="cancelOrder(selectedOrder)"
-          class="btn btn-danger">
-          Annuler la commande
-        </button>
+
       </div>
     </div>
   </div>

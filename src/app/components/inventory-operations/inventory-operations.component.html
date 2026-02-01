@@ -1,3 +1,4 @@
+<!-- inventory-operations.component.html -->
 <div class="operations-container">
   <div class="header">
     <h1>Opérations d'Inventaire</h1>
@@ -19,51 +20,27 @@
 
   <!-- Tabs -->
   <div class="tabs">
-    <button
-      class="tab"
-      [class.active]="activeTab === 'create'"
-      (click)="setTab('create')"
-    >
+    <button class="tab" [class.active]="activeTab === 'create'" (click)="setTab('create')">
       Créer Inventaire
     </button>
-    <button
-      class="tab"
-      [class.active]="activeTab === 'reserve'"
-      (click)="setTab('reserve')"
-    >
+    <button class="tab" [class.active]="activeTab === 'reserve'" (click)="setTab('reserve')">
       Réserver Stock
     </button>
-    <button
-      class="tab"
-      [class.active]="activeTab === 'inbound'"
-      (click)="setTab('inbound')"
-    >
+    <button class="tab" [class.active]="activeTab === 'inbound'" (click)="setTab('inbound')">
       Entrée de Stock
     </button>
-    <button
-      class="tab"
-      [class.active]="activeTab === 'outbound'"
-      (click)="setTab('outbound')"
-    >
+    <button class="tab" [class.active]="activeTab === 'outbound'" (click)="setTab('outbound')">
       Sortie de Stock
     </button>
-    <button
-      class="tab"
-      [class.active]="activeTab === 'adjustment'"
-      (click)="setTab('adjustment')"
-    >
+    <button class="tab" [class.active]="activeTab === 'adjustment'" (click)="setTab('adjustment')">
       Ajustement
     </button>
-    <button
-      class="tab"
-      [class.active]="activeTab === 'allocation'"
-      (click)="setTab('allocation')"
-    >
+    <button class="tab" [class.active]="activeTab === 'allocation'" (click)="setTab('allocation')">
       Allocation Multi-Entrepôts
     </button>
   </div>
 
-  <!-- creation de stock -->
+  <!-- Création de stock -->
   <div *ngIf="activeTab === 'create'" class="tab-content">
     <h2>Créer un Nouvel Inventaire</h2>
 
@@ -81,7 +58,7 @@
             name="productId"
             required
             class="form-control"
-            (change)="onProductSelected($event)"
+            (change)="onProductSelected($event, 'create')"
           >
             <option value="">-- Sélectionner un produit --</option>
             <option *ngFor="let product of products" [value]="product.id">
@@ -98,7 +75,7 @@
             name="warehouseId"
             required
             class="form-control"
-            (change)="onWarehouseSelected($event)"
+            (change)="onWarehouseSelected($event, 'create')"
           >
             <option value="">-- Sélectionner un entrepôt --</option>
             <option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
@@ -195,27 +172,76 @@
       </div>
     </form>
   </div>
+
   <!-- Réservation -->
   <div *ngIf="activeTab === 'reserve'" class="tab-content">
     <h2>Réserver / Libérer du Stock</h2>
-    <form class="operation-form">
+
+    <div *ngIf="products.length === 0 || warehouses.length === 0" class="alert alert-info">
+      <p *ngIf="products.length === 0">Aucun produit disponible.</p>
+      <p *ngIf="warehouses.length === 0">Aucun entrepôt disponible.</p>
+    </div>
+
+    <form class="operation-form" *ngIf="products.length > 0 && warehouses.length > 0">
       <div class="form-row">
         <div class="form-group">
-          <label>ID Produit *</label>
-          <input
-            type="number"
+          <label>Produit *</label>
+          <select
             [(ngModel)]="reservationForm.productId"
             name="reserveProductId"
             required
-          />
+            class="form-control"
+            (change)="onProductSelected($event, 'reserve')"
+          >
+            <option value="">-- Sélectionner un produit --</option>
+            <option *ngFor="let product of products" [value]="product.id">
+              {{ product.name }} ({{ product.code }})
+            </option>
+          </select>
+          <small *ngIf="reservationForm.productId">
+            Sélectionné: {{ reservationForm.productName }}
+          </small>
         </div>
+
         <div class="form-group">
-          <label>ID Entrepôt *</label>
-          <input
-            type="number"
+          <label>Entrepôt *</label>
+          <select
             [(ngModel)]="reservationForm.warehouseId"
             name="reserveWarehouseId"
             required
+            class="form-control"
+            (change)="onWarehouseSelected($event, 'reserve')"
+          >
+            <option value="">-- Sélectionner un entrepôt --</option>
+            <option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
+              {{ warehouse.name }} ({{ warehouse.code }})
+            </option>
+          </select>
+          <small *ngIf="reservationForm.warehouseId">
+            Sélectionné: {{ reservationForm.warehouseName }}
+          </small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Code Produit</label>
+          <input
+            type="text"
+            [(ngModel)]="reservationForm.productCode"
+            name="reserveProductCode"
+            class="form-control"
+            readonly
+          />
+        </div>
+        <div class="form-group">
+          <label>Code Entrepôt</label>
+          <input
+            type="text"
+            [(ngModel)]="reservationForm.warehouseCode"
+            name="reserveWarehouseCode"
+            class="form-control"
+            readonly
           />
         </div>
       </div>
@@ -229,6 +255,7 @@
             name="reserveQuantity"
             min="1"
             required
+            class="form-control"
           />
         </div>
         <div class="form-group">
@@ -238,6 +265,8 @@
             [(ngModel)]="reservationForm.referenceDoc"
             name="reserveReferenceDoc"
             required
+            class="form-control"
+            placeholder="Ex: Commande #123"
           />
         </div>
       </div>
@@ -249,6 +278,9 @@
         <button type="button" class="btn btn-warning" (click)="releaseReservation()" [disabled]="loading">
           Libérer Réservation
         </button>
+        <button type="button" class="btn btn-secondary" (click)="resetReservationForm()">
+          Réinitialiser
+        </button>
       </div>
     </form>
   </div>
@@ -256,36 +288,128 @@
   <!-- Entrée de stock -->
   <div *ngIf="activeTab === 'inbound'" class="tab-content">
     <h2>Entrée de Stock (Inbound)</h2>
-    <form class="operation-form">
+
+    <div *ngIf="products.length === 0 || warehouses.length === 0" class="alert alert-info">
+      <p *ngIf="products.length === 0">Aucun produit disponible.</p>
+      <p *ngIf="warehouses.length === 0">Aucun entrepôt disponible.</p>
+    </div>
+
+    <form class="operation-form" *ngIf="products.length > 0 && warehouses.length > 0">
       <div class="form-row">
         <div class="form-group">
-          <label>ID Produit *</label>
-          <input type="number" [(ngModel)]="movementForm.productId" name="productId" required />
+          <label>Produit *</label>
+          <select
+            [(ngModel)]="movementForm.productId"
+            name="movementProductId"
+            required
+            class="form-control"
+            (change)="onProductSelected($event, 'movement')"
+          >
+            <option value="">-- Sélectionner un produit --</option>
+            <option *ngFor="let product of products" [value]="product.id">
+              {{ product.name }} ({{ product.code }})
+            </option>
+          </select>
+          <small *ngIf="movementForm.productId">
+            Sélectionné: {{ movementForm.productName }}
+          </small>
         </div>
+
         <div class="form-group">
-          <label>ID Entrepôt *</label>
-          <input type="number" [(ngModel)]="movementForm.warehouseId" name="warehouseId" required />
+          <label>Entrepôt *</label>
+          <select
+            [(ngModel)]="movementForm.warehouseId"
+            name="movementWarehouseId"
+            required
+            class="form-control"
+            (change)="onWarehouseSelected($event, 'movement')"
+          >
+            <option value="">-- Sélectionner un entrepôt --</option>
+            <option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
+              {{ warehouse.name }} ({{ warehouse.code }})
+            </option>
+          </select>
+          <small *ngIf="movementForm.warehouseId">
+            Sélectionné: {{ movementForm.warehouseName }}
+          </small>
         </div>
       </div>
 
-      <div class="form-group">
-        <label>Quantité *</label>
-        <input type="number" [(ngModel)]="movementForm.quantity" name="quantity" min="1" required />
+      <div class="form-row">
+        <div class="form-group">
+          <label>Code Produit</label>
+          <input
+            type="text"
+            [(ngModel)]="movementForm.productCode"
+            name="movementProductCode"
+            class="form-control"
+            readonly
+          />
+        </div>
+        <div class="form-group">
+          <label>Code Entrepôt</label>
+          <input
+            type="text"
+            [(ngModel)]="movementForm.warehouseCode"
+            name="movementWarehouseCode"
+            class="form-control"
+            readonly
+          />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Quantité *</label>
+          <input
+            type="number"
+            [(ngModel)]="movementForm.quantity"
+            name="movementQuantity"
+            min="1"
+            required
+            class="form-control"
+          />
+        </div>
+        <div class="form-group">
+          <label>Stock Actuel</label>
+          <input
+            type="number"
+            [value]="movementForm.currentStock"
+            class="form-control"
+            readonly
+          />
+          <small>Stock disponible dans cet entrepôt</small>
+        </div>
       </div>
 
       <div class="form-group">
         <label>Document de Référence</label>
-        <input type="text" [(ngModel)]="movementForm.referenceDoc" name="referenceDoc" />
+        <input
+          type="text"
+          [(ngModel)]="movementForm.referenceDoc"
+          name="movementReferenceDoc"
+          class="form-control"
+          placeholder="Ex: Bon de livraison #456"
+        />
       </div>
 
       <div class="form-group">
         <label>Description</label>
-        <textarea [(ngModel)]="movementForm.description" name="description" rows="3"></textarea>
+        <textarea
+          [(ngModel)]="movementForm.description"
+          name="movementDescription"
+          rows="3"
+          class="form-control"
+          placeholder="Détails de l'entrée..."
+        ></textarea>
       </div>
 
       <div class="form-actions">
         <button type="button" class="btn btn-primary" (click)="recordInbound()" [disabled]="loading">
           {{ loading ? 'Enregistrement...' : 'Enregistrer Entrée' }}
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="resetMovementForm()">
+          Réinitialiser
         </button>
       </div>
     </form>
@@ -294,36 +418,133 @@
   <!-- Sortie de stock -->
   <div *ngIf="activeTab === 'outbound'" class="tab-content">
     <h2>Sortie de Stock (Outbound)</h2>
-    <form class="operation-form">
+
+    <div *ngIf="products.length === 0 || warehouses.length === 0" class="alert alert-info">
+      <p *ngIf="products.length === 0">Aucun produit disponible.</p>
+      <p *ngIf="warehouses.length === 0">Aucun entrepôt disponible.</p>
+    </div>
+
+    <form class="operation-form" *ngIf="products.length > 0 && warehouses.length > 0">
       <div class="form-row">
         <div class="form-group">
-          <label>ID Produit *</label>
-          <input type="number" [(ngModel)]="movementForm.productId" name="productId" required />
+          <label>Produit *</label>
+          <select
+            [(ngModel)]="movementForm.productId"
+            name="outboundProductId"
+            required
+            class="form-control"
+            (change)="onProductSelected($event, 'movement')"
+          >
+            <option value="">-- Sélectionner un produit --</option>
+            <option *ngFor="let product of products" [value]="product.id">
+              {{ product.name }} ({{ product.code }})
+            </option>
+          </select>
+          <small *ngIf="movementForm.productId">
+            Sélectionné: {{ movementForm.productName }}
+          </small>
         </div>
+
         <div class="form-group">
-          <label>ID Entrepôt *</label>
-          <input type="number" [(ngModel)]="movementForm.warehouseId" name="warehouseId" required />
+          <label>Entrepôt *</label>
+          <select
+            [(ngModel)]="movementForm.warehouseId"
+            name="outboundWarehouseId"
+            required
+            class="form-control"
+            (change)="onWarehouseSelected($event, 'movement')"
+          >
+            <option value="">-- Sélectionner un entrepôt --</option>
+            <option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
+              {{ warehouse.name }} ({{ warehouse.code }})
+            </option>
+          </select>
+          <small *ngIf="movementForm.warehouseId">
+            Sélectionné: {{ movementForm.warehouseName }}
+          </small>
         </div>
       </div>
 
-      <div class="form-group">
-        <label>Quantité *</label>
-        <input type="number" [(ngModel)]="movementForm.quantity" name="quantity" min="1" required />
+      <div class="form-row">
+        <div class="form-group">
+          <label>Code Produit</label>
+          <input
+            type="text"
+            [(ngModel)]="movementForm.productCode"
+            name="outboundProductCode"
+            class="form-control"
+            readonly
+          />
+        </div>
+        <div class="form-group">
+          <label>Code Entrepôt</label>
+          <input
+            type="text"
+            [(ngModel)]="movementForm.warehouseCode"
+            name="outboundWarehouseCode"
+            class="form-control"
+            readonly
+          />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Quantité *</label>
+          <input
+            type="number"
+            [(ngModel)]="movementForm.quantity"
+            name="outboundQuantity"
+            min="1"
+            [max]="movementForm.currentStock"
+            required
+            class="form-control"
+            [class.is-invalid]="movementForm.quantity > movementForm.currentStock"
+          />
+          <div *ngIf="movementForm.quantity > movementForm.currentStock" class="invalid-feedback">
+            Stock insuffisant! Disponible: {{ movementForm.currentStock }}
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Stock Disponible</label>
+          <input
+            type="number"
+            [value]="movementForm.currentStock"
+            class="form-control"
+            readonly
+          />
+          <small>Maximum disponible pour sortie</small>
+        </div>
       </div>
 
       <div class="form-group">
         <label>Document de Référence</label>
-        <input type="text" [(ngModel)]="movementForm.referenceDoc" name="referenceDoc" />
+        <input
+          type="text"
+          [(ngModel)]="movementForm.referenceDoc"
+          name="outboundReferenceDoc"
+          class="form-control"
+          placeholder="Ex: Bon de commande #789"
+        />
       </div>
 
       <div class="form-group">
         <label>Description</label>
-        <textarea [(ngModel)]="movementForm.description" name="description" rows="3"></textarea>
+        <textarea
+          [(ngModel)]="movementForm.description"
+          name="outboundDescription"
+          rows="3"
+          class="form-control"
+          placeholder="Détails de la sortie..."
+        ></textarea>
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn btn-danger" (click)="recordOutbound()" [disabled]="loading">
+        <button type="button" class="btn btn-danger" (click)="recordOutbound()" [disabled]="loading || movementForm.quantity > movementForm.currentStock">
           {{ loading ? 'Enregistrement...' : 'Enregistrer Sortie' }}
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="resetMovementForm()">
+          Réinitialiser
         </button>
       </div>
     </form>
@@ -332,37 +553,129 @@
   <!-- Ajustement -->
   <div *ngIf="activeTab === 'adjustment'" class="tab-content">
     <h2>Ajustement de Stock</h2>
-    <form class="operation-form">
+
+    <div *ngIf="products.length === 0 || warehouses.length === 0" class="alert alert-info">
+      <p *ngIf="products.length === 0">Aucun produit disponible.</p>
+      <p *ngIf="warehouses.length === 0">Aucun entrepôt disponible.</p>
+    </div>
+
+    <form class="operation-form" *ngIf="products.length > 0 && warehouses.length > 0">
       <div class="form-row">
         <div class="form-group">
-          <label>ID Produit *</label>
-          <input type="number" [(ngModel)]="adjustmentForm.productId" name="productId" required />
+          <label>Produit *</label>
+          <select
+            [(ngModel)]="adjustmentForm.productId"
+            name="adjustmentProductId"
+            required
+            class="form-control"
+            (change)="onProductSelected($event, 'adjustment')"
+          >
+            <option value="">-- Sélectionner un produit --</option>
+            <option *ngFor="let product of products" [value]="product.id">
+              {{ product.name }} ({{ product.code }})
+            </option>
+          </select>
+          <small *ngIf="adjustmentForm.productId">
+            Sélectionné: {{ adjustmentForm.productName }}
+          </small>
         </div>
+
         <div class="form-group">
-          <label>ID Entrepôt *</label>
-          <input type="number" [(ngModel)]="adjustmentForm.warehouseId" name="warehouseId" required />
+          <label>Entrepôt *</label>
+          <select
+            [(ngModel)]="adjustmentForm.warehouseId"
+            name="adjustmentWarehouseId"
+            required
+            class="form-control"
+            (change)="onWarehouseSelected($event, 'adjustment')"
+          >
+            <option value="">-- Sélectionner un entrepôt --</option>
+            <option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
+              {{ warehouse.name }} ({{ warehouse.code }})
+            </option>
+          </select>
+          <small *ngIf="adjustmentForm.warehouseId">
+            Sélectionné: {{ adjustmentForm.warehouseName }}
+          </small>
         </div>
       </div>
 
-      <div class="form-group">
-        <label>Quantité d'Ajustement * (positif ou négatif)</label>
-        <input type="number" [(ngModel)]="adjustmentForm.adjustmentQuantity" name="adjustmentQuantity" required />
-        <small>Utilisez un nombre négatif pour réduire le stock</small>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Code Produit</label>
+          <input
+            type="text"
+            [(ngModel)]="adjustmentForm.productCode"
+            name="adjustmentProductCode"
+            class="form-control"
+            readonly
+          />
+        </div>
+        <div class="form-group">
+          <label>Code Entrepôt</label>
+          <input
+            type="text"
+            [(ngModel)]="adjustmentForm.warehouseCode"
+            name="adjustmentWarehouseCode"
+            class="form-control"
+            readonly
+          />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Quantité d'Ajustement *</label>
+          <input
+            type="number"
+            [(ngModel)]="adjustmentForm.adjustmentQuantity"
+            name="adjustmentQuantity"
+            required
+            class="form-control"
+            placeholder="Positif ou négatif"
+          />
+          <small>Positif pour ajouter, négatif pour retirer</small>
+        </div>
+        <div class="form-group">
+          <label>Stock Actuel</label>
+          <input
+            type="number"
+            [value]="adjustmentForm.currentStock"
+            class="form-control"
+            readonly
+          />
+          <small>Stock actuel avant ajustement</small>
+        </div>
       </div>
 
       <div class="form-group">
         <label>Document de Référence</label>
-        <input type="text" [(ngModel)]="adjustmentForm.referenceDoc" name="referenceDoc" />
+        <input
+          type="text"
+          [(ngModel)]="adjustmentForm.referenceDoc"
+          name="adjustmentReferenceDoc"
+          class="form-control"
+          placeholder="Ex: Ajustement d'inventaire"
+        />
       </div>
 
       <div class="form-group">
         <label>Raison</label>
-        <textarea [(ngModel)]="adjustmentForm.reason" name="reason" rows="3"></textarea>
+        <textarea
+          [(ngModel)]="adjustmentForm.reason"
+          name="adjustmentReason"
+          rows="3"
+          class="form-control"
+          placeholder="Ex: Correction d'inventaire, perte, etc..."
+        ></textarea>
       </div>
 
       <div class="form-actions">
         <button type="button" class="btn btn-warning" (click)="recordAdjustment()" [disabled]="loading">
           {{ loading ? 'Enregistrement...' : 'Enregistrer Ajustement' }}
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="resetAdjustmentForm()">
+          Réinitialiser
         </button>
       </div>
     </form>
@@ -371,15 +684,68 @@
   <!-- Allocation -->
   <div *ngIf="activeTab === 'allocation'" class="tab-content">
     <h2>Allocation Multi-Entrepôts</h2>
-    <form class="operation-form">
+
+    <div *ngIf="products.length === 0" class="alert alert-info">
+      Aucun produit disponible.
+    </div>
+
+    <form class="operation-form" *ngIf="products.length > 0">
       <div class="form-group">
-        <label>ID Produit *</label>
-        <input type="number" [(ngModel)]="allocationForm.productId" name="productId" required />
+        <label>Produit *</label>
+        <select
+          [(ngModel)]="allocationForm.productId"
+          name="allocationProductId"
+          required
+          class="form-control"
+          (change)="onProductSelected($event, 'allocation')"
+        >
+          <option value="">-- Sélectionner un produit --</option>
+          <option *ngFor="let product of products" [value]="product.id">
+            {{ product.name }} ({{ product.code }})
+          </option>
+        </select>
+        <small *ngIf="allocationForm.productId">
+          Sélectionné: {{ allocationForm.productName }}
+        </small>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Quantité Totale *</label>
+          <input
+            type="number"
+            [(ngModel)]="allocationForm.totalQuantity"
+            name="allocationTotalQuantity"
+            min="1"
+            required
+            class="form-control"
+            [class.is-invalid]="allocationForm.totalQuantity > allocationForm.availableStock"
+          />
+          <div *ngIf="allocationForm.totalQuantity > allocationForm.availableStock" class="invalid-feedback">
+            Stock total insuffisant! Disponible: {{ allocationForm.availableStock }}
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Stock Total Disponible</label>
+          <input
+            type="number"
+            [value]="allocationForm.availableStock"
+            class="form-control"
+            readonly
+          />
+          <small>Stock total disponible dans tous les entrepôts</small>
+        </div>
       </div>
 
       <div class="form-group">
-        <label>Quantité Totale *</label>
-        <input type="number" [(ngModel)]="allocationForm.totalQuantity" name="totalQuantity" min="1" required />
+        <label>Code Produit</label>
+        <input
+          type="text"
+          [(ngModel)]="allocationForm.productCode"
+          name="allocationProductCode"
+          class="form-control"
+          readonly
+        />
       </div>
 
       <div class="form-group">
@@ -388,6 +754,7 @@
           type="text"
           [(ngModel)]="warehouseIdsInput"
           name="warehouseIds"
+          class="form-control"
           placeholder="Ex: 1, 2, 3"
           required
         />
@@ -395,8 +762,11 @@
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn btn-info" (click)="allocateStock()" [disabled]="loading">
+        <button type="button" class="btn btn-info" (click)="allocateStock()" [disabled]="loading || allocationForm.totalQuantity > allocationForm.availableStock">
           {{ loading ? 'Allocation...' : 'Allouer Stock' }}
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="resetAllocationForm()">
+          Réinitialiser
         </button>
       </div>
     </form>

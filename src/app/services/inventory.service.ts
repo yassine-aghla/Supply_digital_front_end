@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import {Observable, throwError} from 'rxjs';
+import {Observable, of, throwError} from 'rxjs';
 import {
   Inventory,
   ReservationRequest,
@@ -156,6 +156,28 @@ export class InventoryService {
       status: error.status,
       error: error.error
     }));
+  }
+
+  /**
+   * Récupérer un inventaire par produit et entrepôt
+   * Retourne null si non trouvé
+   */
+  getInventoryByProductAndWarehouse(productId: number, warehouseId: number): Observable<Inventory | null> {
+    const params = new HttpParams()
+      .set('productId', productId.toString())
+      .set('warehouseId', warehouseId.toString());
+
+    return this.http.get<Inventory>(`${this.baseUrl}/by-product-warehouse`, { params }).pipe(
+      catchError(error => {
+        if (error.status === 404) {
+          // Inventaire non trouvé - c'est OK
+          console.log(`Aucun inventaire trouvé pour produit ${productId} et entrepôt ${warehouseId}`);
+          return of(null);
+        }
+        console.error('Erreur lors de la recherche de l\'inventaire:', error);
+        return throwError(() => new Error('Erreur lors de la recherche de l\'inventaire'));
+      })
+    );
   }
 
 

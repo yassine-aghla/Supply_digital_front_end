@@ -187,56 +187,100 @@ export class HomeComponent implements OnInit {
   }
 
   submitOrder(): void {
+    // 1. Validation de base
     if (!this.checkoutForm.deliveryAddress.trim()) {
       this.showError('Veuillez entrer une adresse de livraison');
       return;
     }
 
-    // Récupérer l'ID du client connecté
-    const clientId = this.currentUser?.id;
-
-    if (!clientId) {
-      this.showError('Erreur: utilisateur non identifié');
+    if (this.cart.length === 0) {
+      this.showError('Votre panier est vide');
       return;
     }
 
-    // Créer la commande avec votre modèle SalesOrderCreate
-    const orderLines: SalesOrderLineCreate[] = this.cart.map(item => ({
+    // 2. Préparer les données
+    const orderLines = this.cart.map(item => ({
       productId: item.productId,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
       backordered: false
     }));
 
-    const orderRequest: SalesOrderCreate = {
-      clientId: clientId,
-      orderLines: orderLines
+    const orderRequest = {
+      orderLines: orderLines,
+      deliveryAddress: this.checkoutForm.deliveryAddress,
+      notes: this.checkoutForm.notes
     };
 
-    console.log('Creating order:', orderRequest);
+    console.log('🆕 NOUVELLE API - Données envoyées:', orderRequest);
 
+    // 3. Appeler la NOUVELLE API
     this.loading = true;
     this.error = null;
 
-    this.orderService.createOrder(orderRequest).subscribe({
-      next: (order) => {
-        console.log('Order created successfully:', order);
-        this.showSuccessMessage('Commande créée avec succès!');
-        this.cart = [];
-        this.showCheckout = false;
-        this.checkoutForm = { deliveryAddress: '', notes: '' };
-        this.loading = false;
-
-        setTimeout(() => {
-          this.router.navigate(['/my-orders']);
-        }, 2000);
-      },
-      error: (error) => {
-        console.error('Error creating order:', error);
-        this.showError(error.error?.message || 'Erreur lors de la création de la commande');
-        this.loading = false;
-      }
+    this.orderService.createOrderForClient(orderRequest).subscribe({
+      next: (order) => this.handleSuccess(order),
+      error: (error) => this.handleError(error)
     });
+  }
+
+  private handleError(error: any): void {
+    console.error('❌ ERREUR - Détails:', error);
+
+    let errorMessage = 'Erreur lors de la création de la commande';
+
+    // Messages d'erreur précis
+    if (error.status === 400) {
+      if (error.error?.message?.includes('Client non trouvé')) {
+        errorMessage = 'Votre compte n\'a pas été trouvé. Veuillez vous reconnecter.';
+      } else if (error.error?.errors) {
+        const errors = error.error.errors;
+        errorMessage = 'Données invalides: ' + Object.values(errors).join(', ');
+      } else {
+        errorMessage = 'Données invalides envoyées au serveur.';
+      }
+    }
+    else if (error.status === 401) {
+      errorMessage = 'Session expirée. Redirection vers la connexion...';
+      setTimeout(() => this.logout(), 2000);
+    }
+    else if (error.status === 403) {
+      errorMessage = 'Vous n\'avez pas la permission de créer une commande.';
+    }
+    else if (error.status === 404) {
+      errorMessage = 'Le service de commande est temporairement indisponible.';
+    }
+    else if (error.status === 500) {
+      errorMessage = 'Erreur serveur. Veuillez réessayer dans quelques minutes.';
+    }
+    else if (error.error?.message) {
+      errorMessage = error.error.message;
+    }
+
+    this.showError(errorMessage);
+    this.loading = false;
+
+    // Optionnel: Afficher les détails en console pour déboguer
+    console.log('Status:', error.status);
+    console.log('Error object:', error.error);
+  }
+
+  private handleSuccess(order: any): void {
+    console.log('✅ SUCCÈS - Commande créée:', order);
+
+    // Afficher message de succès
+    this.showSuccessMessage('🎉 Commande créée avec succès!');
+
+    // Réinitialiser
+    this.cart = [];
+    this.showCheckout = false;
+    this.checkoutForm = { deliveryAddress: '', notes: '' };
+    this.loading = false;
+
+    // Rediriger après 3 secondes
+    setTimeout(() => {
+      this.router.navigate(['/my-orders']);
+    }, 3000);
   }
 
   viewMyOrders(): void {
