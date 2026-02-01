@@ -13,6 +13,46 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+/* components/purchase-order-form/purchase-order-form.component.css */
+.readonly-price {
+  padding: 10px 15px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-weight: bold;
+  color: #495057;
+}
+
+.readonly-price i {
+  margin-right: 8px;
+  color: #007bff; /* Bleu pour l'achat */
+}
+
+.price-display {
+  margin-bottom: 15px;
+}
+
+/* Style pour l'affichage du total ligne */
+.line-total {
+  padding: 8px 12px;
+  background-color: #e9ecef;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-weight: bold;
+  color: #28a745; /* Vert pour les totaux */
+}
+
+.line-total i {
+  margin-right: 8px;
+  color: #28a745;
+}
+
+/* Input group pour les prix en lecture seule */
+.input-group .form-control[readonly] {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+}
+
 .page-header h1 {
   margin: 0;
   color: #2c3e50;

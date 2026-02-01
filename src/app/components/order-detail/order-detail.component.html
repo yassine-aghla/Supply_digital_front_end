@@ -117,13 +117,7 @@
         </div>
 
         <div class="action-buttons">
-          <button
-            class="btn btn-info"
-            (click)="checkAvailability()"
-            [disabled]="processing"
-          >
-            <i class="fas fa-search"></i> Vérifier Disponibilité
-          </button>
+
 
           <button
             *ngIf="canReserve()"

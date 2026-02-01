@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../services/product.service';
 import { Product } from '../../models/product.model';
+import {Role} from '../../models/user.model';
+import {AuthService} from '../../services/auth.service';
 
 @Component({
   selector: 'app-product-list',
@@ -17,6 +19,8 @@ export class ProductListComponent implements OnInit {
   error: string | null = null;
   selectedCategory: string = '';
   successMessage: string | null = null;
+  isAdmin = false;
+  currentUserRole: Role | null = null;
 
   // PROPRIÉTÉS POUR LE POPUP DE FORMULAIRE
   showFormPopup = false;
@@ -28,11 +32,14 @@ export class ProductListComponent implements OnInit {
   categoryOptions = ['ELECTRONICS', 'CLOTHING', 'FOOD', 'BOOKS', 'SPORTS', 'HOME', 'OTHER'];
   mainStyleOptions = ['CLASSIC', 'MODERN', 'VINTAGE', 'SPORT', 'CASUAL', 'FORMAL'];
 
-  constructor(private productService: ProductService) {
+  constructor(private productService: ProductService,private authService: AuthService) {
   }
 
   ngOnInit(): void {
     this.loadProducts();
+    const user = this.authService.getCurrentUser();
+    this.currentUserRole = user?.role || null;
+    this.isAdmin = user?.role === Role.ADMIN;
   }
 
   loadProducts(): void {
@@ -213,6 +220,9 @@ export class ProductListComponent implements OnInit {
       configuration: '',
       base: '',
       actualEmail: '',
+      price:0,
+      imageUrl:'',
+      stockQuantity:0,
       active: true,
       index: false,
       profile: '',
@@ -226,4 +236,22 @@ export class ProductListComponent implements OnInit {
       this.error = null;
     }, 3000);
   }
+
+
+  canEdit(): boolean {
+    return this.currentUserRole === Role.ADMIN;
+  }
+
+  canDelete(): boolean {
+    return this.currentUserRole === Role.ADMIN;
+  }
+
+  canCreate(): boolean {
+    return this.currentUserRole === Role.ADMIN;
+  }
+
+  canchange():boolean{
+    return this.currentUserRole === Role.ADMIN;
+  }
+
 }

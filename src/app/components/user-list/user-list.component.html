@@ -72,7 +72,6 @@
         <th>Email</th>
         <th>Rôle</th>
         <th>Statut</th>
-        <th>Dernière connexion</th>
         <th>Actions</th>
       </tr>
       </thead>
@@ -94,9 +93,7 @@
               {{ user.active ? 'Actif' : 'Inactif' }}
             </span>
         </td>
-        <td>
-          {{ user.lastLogin ? (user.lastLogin | date:'dd/MM/yyyy HH:mm') : 'Jamais' }}
-        </td>
+
         <td class="actions">
           <button
             class="btn-icon btn-edit"

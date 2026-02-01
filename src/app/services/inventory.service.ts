@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import {Observable, throwError} from 'rxjs';
 import {
   Inventory,
   ReservationRequest,
@@ -13,6 +13,7 @@ import {
   AvailabilityResponse,
   StockStatusResponse
 } from '../models/inventory.model';
+import {catchError} from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -137,4 +138,25 @@ export class InventoryService {
       { params }
     );
   }
+
+  updateInventoryQuantities(id: number, qtyOnHand: number, qtyReserved: number): Observable<Inventory> {
+    const params = new HttpParams()
+      .set('qtyOnHand', qtyOnHand.toString())
+      .set('qtyReserved', qtyReserved.toString());
+
+    return this.http.patch<Inventory>(`${this.baseUrl}/${id}/quantities`, null, { params }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  private handleError(error: any): Observable<never> {
+    console.error('InventoryService error:', error);
+    return throwError(() => ({
+      message: error.error?.message || 'Une erreur est survenue',
+      status: error.status,
+      error: error.error
+    }));
+  }
+
+
 }

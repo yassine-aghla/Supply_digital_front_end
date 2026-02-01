@@ -5,6 +5,8 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { PurchaseOrderService } from '../../services/purchase-order.service';
 import { PurchaseOrder, PurchaseOrderStatus } from '../../models/purchase-order.model';
+import { Warehouse } from '../../models/warehouse.model';
+import { WarehouseService } from '../../services/warehouse.service';
 
 @Component({
   selector: 'app-purchase-order-detail',
@@ -18,6 +20,9 @@ export class PurchaseOrderDetailComponent implements OnInit {
   loading = false;
   error: string | null = null;
   warehouseId: number = 1;
+  selectedWarehouseId: number = 1; // Nouvelle variable pour le select
+  warehouses: Warehouse[] = []; // Liste des entrepôts
+  loadingWarehouses = false;
   cancelReason = '';
   showCancelModal = false;
   processing = false;
@@ -28,13 +33,15 @@ export class PurchaseOrderDetailComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private purchaseOrderService: PurchaseOrderService
+    private purchaseOrderService: PurchaseOrderService,
+    private warehouseService: WarehouseService
   ) {}
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.loadOrder(+id);
+      this.loadWarehouses();
     }
   }
 
@@ -55,6 +62,35 @@ export class PurchaseOrderDetailComponent implements OnInit {
     });
   }
 
+  loadWarehouses(): void {
+    this.loadingWarehouses = true;
+    this.warehouseService.getAllWarehouses().subscribe({
+      next: (warehouses) => {
+        this.warehouses = warehouses;
+        this.loadingWarehouses = false;
+
+        // Sélectionnez le premier entrepôt par défaut
+        if (warehouses.length > 0) {
+          this.selectedWarehouseId = warehouses[0].id!;
+          this.warehouseId = warehouses[0].id!; // Mettez à jour l'ancienne variable pour compatibilité
+        }
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des entrepôts:', err);
+        this.loadingWarehouses = false;
+      }
+    });
+  }
+
+  onWarehouseChange(): void {
+    this.warehouseId = this.selectedWarehouseId;
+  }
+
+  // Méthode pour obtenir le nom de l'entrepôt sélectionné
+  getSelectedWarehouseName(): string {
+    const warehouse = this.warehouses.find(w => w.id === this.selectedWarehouseId);
+    return warehouse ? warehouse.name : 'Non spécifié';
+  }
   getStatusBadgeClass(): string {
     if (!this.order) return '';
     return this.purchaseOrderService.getStatusBadgeClass(this.order.status);

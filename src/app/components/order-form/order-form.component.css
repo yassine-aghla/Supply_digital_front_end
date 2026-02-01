@@ -4,7 +4,31 @@
   background: #f8f9fa;
   min-height: 100vh;
 }
+/* components/order-form/order-form.component.css */
+.readonly-price {
+  padding: 10px 15px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-weight: bold;
+  color: #495057;
+}
 
+.readonly-price i {
+  margin-right: 8px;
+  color: #28a745;
+}
+
+.price-display {
+  margin-bottom: 15px;
+}
+
+/* Style pour champ en lecture seule */
+.form-control[readonly] {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+  opacity: 1;
+}
 .page-header {
   margin-bottom: 2rem;
   background: white;

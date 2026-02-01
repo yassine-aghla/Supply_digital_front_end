@@ -12,6 +12,7 @@ export interface SalesOrderLine {
 }
 
 export interface SalesOrder {
+  totalItems: number;
   id?: number;
   clientId: number;
   clientName?: string;

@@ -27,8 +27,8 @@
         <button class="user-btn" (click)="toggleUserDropdown()">
           <div class="user-avatar">AD</div>
           <div class="user-info">
-            <span class="user-name">Admin User</span>
-            <span class="user-role">Administrateur</span>
+            <span class="user-name">{{getDisplayName()}}</span>
+            <span class="user-role">{{getRoleDisplay()}}</span>
           </div>
           <i class="fas fa-user user-icon"></i>
         </button>

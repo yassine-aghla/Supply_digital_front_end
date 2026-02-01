@@ -13,6 +13,7 @@ interface MenuItem {
   path: string;
   submenu?: MenuItem[];
   isOpen?: boolean;
+  isLogout?: boolean;
 }
 
 @Component({
@@ -25,7 +26,7 @@ interface MenuItem {
 export class SidebarComponent implements OnInit {
   isCollapsed = false;
   activePath: string = '';
-  currentUser: User | null = null; // Ajoutez cette ligne
+  currentUser: User | null = null;
   private userSubscription: Subscription | null = null;
 
   menuItems: MenuItem[] = [
@@ -89,29 +90,6 @@ export class SidebarComponent implements OnInit {
       title: 'Fournisseurs',
       icon: 'fas fa-user-tie',
       path: '/suppliers'
-    },
-    {
-      title: 'Rapports',
-      icon: 'fas fa-chart-bar',
-      path: '/reports',
-      submenu: [
-        { title: 'Analytique', icon: 'fas fa-chart-pie', path: '/reports/analytics' },
-        { title: 'Stocks', icon: 'fas fa-box-open', path: '/reports/stocks' },
-        { title: 'Ventes', icon: 'fas fa-money-bill', path: '/reports/sales' }
-      ],
-      isOpen: false
-    },
-    {
-      title: 'Paramètres',
-      icon: 'fas fa-cog',
-      path: '/settings',
-      submenu: [
-        { title: 'Utilisateurs', icon: 'fas fa-users', path: '/settings/users' },
-        { title: 'Permissions', icon: 'fas fa-shield-alt', path: '/settings/permissions' },
-        { title: 'Configuration', icon: 'fas fa-wrench', path: '/settings/config' }
-      ],
-
-      isOpen: false
     }
   ];
 
@@ -149,6 +127,15 @@ export class SidebarComponent implements OnInit {
     if (this.userSubscription) {
       this.userSubscription.unsubscribe();
     }
+  }
+
+  logout(): void {
+    console.log('Sidebar - Logout clicked');
+
+    // Appeler le service d'authentification pour se déconnecter
+    this.authService.logout();
+
+    // Note: La redirection est gérée dans le AuthService
   }
 
   // Méthode pour obtenir les initiales

@@ -123,38 +123,70 @@ export class PurchaseOrderService {
     );
   }
 
-  // ============ Utility Methods ============
-  getStatusBadgeClass(status: PurchaseOrderStatus | string): string {
-    const classes: { [key: string]: string } = {
-      'PENDING': 'badge-warning',
-      'APPROVED': 'badge-primary',
-      'RECEIVED': 'badge-success',
-      'CANCELLED': 'badge-danger'
-    };
-    return classes[status] || 'badge-secondary';
-  }
-
-  getStatusText(status: PurchaseOrderStatus | string): string {
-    const statusTexts: { [key: string]: string } = {
-      'PENDING': 'En attente',
-      'APPROVED': 'Approuvée',
-      'RECEIVED': 'Reçue',
-      'CANCELLED': 'Annulée'
-    };
-    return statusTexts[status] || status;
-  }
-
   canApprove(order: PurchaseOrder): boolean {
-    return order.status === PurchaseOrderStatus.PENDING;
+    // Accepte à la fois PENDING et CONFIRMED (si le backend dit CONFIRMED)
+    const status = order.status || '';
+    return status === PurchaseOrderStatus.PENDING ||
+      status === 'CONFIRMED' as any;
   }
 
   canReceive(order: PurchaseOrder): boolean {
-    return order.status === PurchaseOrderStatus.APPROVED;
+    // Peut recevoir si APPROVED ou CONFIRMED
+    const status = order.status || '';
+    return status === PurchaseOrderStatus.APPROVED ||
+      status === 'CONFIRMED' as any;
   }
 
   canCancel(order: PurchaseOrder): boolean {
-    return order.status === PurchaseOrderStatus.PENDING ||
-      order.status === PurchaseOrderStatus.APPROVED;
+    // Peut annuler si PENDING, APPROVED ou CONFIRMED
+    const status = order.status || '';
+    return status === PurchaseOrderStatus.PENDING ||
+      status === PurchaseOrderStatus.APPROVED ||
+      status === 'CONFIRMED' as any;
+  }
+
+// Méthode utilitaire pour normaliser les statuts
+  normalizeStatus(status: string): string {
+    const normalized = (status || '').toUpperCase();
+
+    // Si le backend retourne CONFIRMED, on le mappe à APPROVED
+    if (normalized === 'CONFIRMED') {
+      return PurchaseOrderStatus.APPROVED;
+    }
+
+    return normalized;
+  }
+
+// Utilisez cette méthode dans getStatusText et getStatusBadgeClass
+  getStatusText(status: string): string {
+    const normalized = this.normalizeStatus(status);
+
+    const labels: { [key: string]: string } = {
+      'PENDING': 'En attente',
+      'APPROVED': 'Approuvée',  // Pour l'UI, on garde "Approuvée"
+      'RECEIVED': 'Reçue',
+      'CANCELLED': 'Annulée'
+    };
+
+    // Si c'est CONFIRMED mais pas dans l'enum, on affiche "Confirmée"
+    if (status.toUpperCase() === 'CONFIRMED') {
+      return 'Confirmée';
+    }
+
+    return labels[normalized] || status;
+  }
+
+  getStatusBadgeClass(status: string): string {
+    const normalized = this.normalizeStatus(status);
+
+    const classes: { [key: string]: string } = {
+      'PENDING': 'badge-warning',
+      'APPROVED': 'badge-success',
+      'RECEIVED': 'badge-info',
+      'CANCELLED': 'badge-danger'
+    };
+
+    return classes[normalized] || 'badge-secondary';
   }
 
   calculateOrderTotal(order: PurchaseOrder): number {

@@ -1,0 +1,311 @@
+<!-- pages/client/home/home.component.html -->
+<div class="page-container">
+  <!-- Header -->
+  <header class="main-header">
+    <div class="header-container">
+      <div class="header-left">
+        <div class="logo-wrapper">
+          <div class="logo-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+          </div>
+          <div class="logo-text">
+            <h1 class="logo-title">ShopHub</h1>
+            <p class="logo-subtitle">Bienvenue, {{ currentUser?.username }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button (click)="viewMyOrders()" class="btn btn-secondary">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <span>Mes commandes</span>
+        </button>
+
+        <button (click)="showCart = true" class="btn btn-icon">
+          <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          <span *ngIf="getCartItemCount() > 0" class="cart-badge">
+            {{ getCartItemCount() }}
+          </span>
+        </button>
+
+        <button (click)="logout()" class="btn btn-icon">
+          <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Success/Error Messages -->
+  <div *ngIf="successMessage" class="message message-success">
+    {{ successMessage }}
+  </div>
+  <div *ngIf="error" class="message message-error">
+    {{ error }}
+  </div>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Search and Filters -->
+    <div class="search-section">
+      <div class="search-box">
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="filterProducts()"
+          placeholder="Rechercher des produits..."
+          class="search-input"
+        />
+        <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+
+      <div class="category-filters">
+        <button
+          *ngFor="let category of categories"
+          (click)="selectedCategory = category; filterProducts()"
+          [class.active]="selectedCategory === category"
+          class="filter-btn"
+        >
+          {{ category === 'all' ? 'Tous' : category }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-container">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- Products Grid -->
+    <div *ngIf="!loading && filteredProducts.length > 0" class="products-grid">
+      <div *ngFor="let product of filteredProducts" class="product-card">
+        <div class="product-image">
+          <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" />
+          <div *ngIf="!product.imageUrl" class="product-image-placeholder">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+          </div>
+          <span *ngIf="getStockBadge(product)"
+                [class.limited]="getProductStock(product) > 0 && getProductStock(product) < 10"
+                [class.out]="getProductStock(product) === 0"
+                class="stock-badge">
+            {{ getStockBadge(product) }}
+          </span>
+        </div>
+
+        <div class="product-info">
+          <h3 class="product-name">{{ product.name }}</h3>
+          <p class="product-description">{{ product.description || 'Aucune description' }}</p>
+
+          <div class="product-footer">
+            <span class="product-price">{{ getProductPrice(product) | number:'1.2-2' }} MAD</span>
+            <span class="product-stock">Stock: {{ getProductStock(product) }}</span>
+          </div>
+
+          <button
+            (click)="addToCart(product)"
+            [disabled]="!isProductAvailable(product)"
+            class="btn-add-cart"
+          >
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span>{{ isProductAvailable(product) ? 'Ajouter au panier' : 'Indisponible' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && filteredProducts.length === 0" class="empty-state">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+      </svg>
+      <h3>Aucun produit trouvé</h3>
+      <p>Essayez de modifier vos filtres de recherche</p>
+    </div>
+  </main>
+
+  <!-- Cart Sidebar -->
+  <div *ngIf="showCart" class="cart-overlay" (click)="showCart = false">
+    <div class="cart-sidebar" (click)="$event.stopPropagation()">
+      <div class="cart-header">
+        <h2 class="cart-title">Mon Panier ({{ getCartItemCount() }})</h2>
+        <button (click)="showCart = false" class="btn btn-icon">
+          <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div *ngIf="cart.length === 0" class="cart-empty">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+        <p>Votre panier est vide</p>
+      </div>
+
+      <div *ngIf="cart.length > 0" class="cart-items">
+        <div *ngFor="let item of cart" class="cart-item">
+          <div class="cart-item-header">
+            <div class="cart-item-info">
+              <h3 class="cart-item-name">{{ item.productName }}</h3>
+              <p class="cart-item-price">{{ item.unitPrice | number:'1.2-2' }} MAD</p>
+            </div>
+            <button (click)="removeFromCart(item)" class="btn-remove">
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="cart-item-footer">
+            <div class="quantity-controls">
+              <button (click)="updateQuantity(item, -1)" class="quantity-btn">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                </svg>
+              </button>
+              <span class="quantity-value">{{ item.quantity }}</span>
+              <button (click)="updateQuantity(item, 1)" class="quantity-btn">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+            </div>
+            <span class="cart-item-total">{{ item.totalPrice | number:'1.2-2' }} MAD</span>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="cart.length > 0" class="cart-footer">
+        <div class="cart-total">
+          <span class="cart-total-label">Total:</span>
+          <span class="cart-total-value">{{ getCartTotal() | number:'1.2-2' }} MAD</span>
+        </div>
+        <button (click)="proceedToCheckout()" class="btn-checkout">
+          Commander
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Checkout Modal -->
+  <div *ngIf="showCheckout" class="modal-overlay" (click)="showCheckout = false">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">Finaliser la commande</h2>
+        <button (click)="showCheckout = false" class="btn btn-icon">
+          <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-section">
+          <h3>Résumé de la commande</h3>
+          <div class="order-summary">
+            <div *ngFor="let item of cart" class="order-item">
+              <span class="order-item-name">{{ item.productName }} × {{ item.quantity }}</span>
+              <span class="order-item-price">{{ item.totalPrice | number:'1.2-2' }} MAD</span>
+            </div>
+            <div class="order-total">
+              <span>Total</span>
+              <span class="order-total-value">{{ getCartTotal() | number:'1.2-2' }} MAD</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-group">
+            <label class="form-label">Adresse de livraison *</label>
+            <textarea
+              [(ngModel)]="checkoutForm.deliveryAddress"
+              rows="3"
+              class="form-textarea"
+              placeholder="Entrez votre adresse complète..."
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Notes (optionnel)</label>
+            <textarea
+              [(ngModel)]="checkoutForm.notes"
+              rows="2"
+              class="form-textarea"
+              placeholder="Instructions de livraison, préférences..."
+            ></textarea>
+          </div>
+        </div>
+
+        <button
+          (click)="submitOrder()"
+          [disabled]="loading || !checkoutForm.deliveryAddress.trim()"
+          class="btn-submit"
+        >
+          <svg *ngIf="loading" width="20" height="20" class="spinner" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" opacity="0.25"></circle>
+            <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" opacity="0.75"></path>
+          </svg>
+          <span>{{ loading ? 'Traitement...' : 'Confirmer la commande' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="main-footer">
+    <div class="footer-container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>À propos de ShopHub</h3>
+          <p>Votre marketplace de confiance pour tous vos achats en ligne. Découvrez notre large sélection de produits de qualité.</p>
+        </div>
+
+        <div class="footer-section">
+          <h3>Liens rapides</h3>
+          <ul class="footer-links">
+            <li><a href="#">Accueil</a></li>
+            <li><a (click)="viewMyOrders()" style="cursor: pointer;">Mes commandes</a></li>
+            <li><a href="#">À propos</a></li>
+            <li><a href="#">Contact</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h3>Service client</h3>
+          <ul class="footer-links">
+            <li><a href="#">Aide & FAQ</a></li>
+            <li><a href="#">Retours</a></li>
+            <li><a href="#">Livraison</a></li>
+            <li><a href="#">Conditions générales</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h3>Contact</h3>
+          <ul class="footer-links">
+            <li>Email: contact.ma</li>
+            <li>Tél: +212 5XX-XXXXXX</li>
+            <li>Casablanca, Maroc</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2026 ShopHub. Tous droits réservés.</p>
+      </div>
+    </div>
+  </footer>
+</div>

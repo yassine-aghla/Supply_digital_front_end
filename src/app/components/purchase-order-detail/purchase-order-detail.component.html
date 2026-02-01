@@ -172,20 +172,45 @@
         <i class="fas fa-cogs"></i> Actions
       </div>
       <div class="card-body">
-        <div class="warehouse-selector" *ngIf="canReceive()">
+        <div class="warehouse-selector" *ngIf="canReceive() && !loadingWarehouses">
           <label>
             <i class="fas fa-warehouse"></i> Entrepôt de réception:
           </label>
-          <input
-            type="number"
-            [(ngModel)]="warehouseId"
+
+          <!-- Select pour choisir l'entrepôt -->
+          <select
+            [(ngModel)]="selectedWarehouseId"
+            (ngModelChange)="onWarehouseChange()"
             class="form-control"
-            min="1"
-            placeholder="ID de l'entrepôt"
-          />
-          <small class="form-text text-muted">
-            L'entrepôt où la marchandise sera réceptionnée
+            [disabled]="warehouses.length === 0"
+          >
+            <option [ngValue]="null" *ngIf="warehouses.length === 0">
+              Aucun entrepôt disponible
+            </option>
+            <option *ngFor="let warehouse of warehouses" [ngValue]="warehouse.id">
+              {{ warehouse.name }}
+            </option>
+          </select>
+
+          <small class="form-text text-muted" *ngIf="warehouses.length === 0">
+            <i class="fas fa-exclamation-triangle"></i> Aucun entrepôt actif disponible
           </small>
+
+          <small class="form-text text-muted" *ngIf="warehouses.length > 0">
+            <i class="fas fa-info-circle"></i> L'entrepôt où la marchandise sera réceptionnée
+          </small>
+
+          <!-- Afficher l'entrepôt sélectionné -->
+          <div *ngIf="selectedWarehouseId && warehouses.length > 0" class="selected-warehouse-info">
+            <i class="fas fa-check-circle text-success"></i>
+            <strong>Sélectionné:</strong> {{ getSelectedWarehouseName() }}
+          </div>
+        </div>
+
+        <!-- Loading pour les entrepôts -->
+        <div *ngIf="loadingWarehouses" class="warehouse-loading">
+          <div class="spinner-small"></div>
+          <span>Chargement des entrepôts...</span>
         </div>
 
         <div class="action-buttons">
@@ -198,26 +223,6 @@
           >
             <i class="fas fa-check-circle"></i> Approuver
           </button>
-
-          <!-- Check Reception Status -->
-          <button
-            class="btn btn-info"
-            (click)="checkReceptionStatus()"
-            [disabled]="processing"
-          >
-            <i class="fas fa-clipboard-check"></i> Vérifier Statut Réception
-          </button>
-
-          <!-- Check Stock Availability -->
-          <button
-            *ngIf="canReceive()"
-            class="btn btn-secondary"
-            (click)="checkStockAvailability()"
-            [disabled]="processing"
-          >
-            <i class="fas fa-boxes"></i> Vérifier Stock
-          </button>
-
           <!-- Receive Full Order -->
           <button
             *ngIf="canReceive()"
@@ -267,6 +272,8 @@
       </div>
     </div>
   </div>
+
+
 
   <!-- Cancel Modal -->
   <div *ngIf="showCancelModal" class="modal-overlay" (click)="closeCancelModal()">

@@ -1,0 +1,248 @@
+<div class="page-container">
+  <!-- Header -->
+  <header class="main-header">
+    <div class="header-container">
+      <div class="header-left">
+        <button (click)="goBack()" class="btn-back">
+          <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          <span>Retour</span>
+        </button>
+        <h1 class="page-title">Mes Commandes</h1>
+      </div>
+    </div>
+  </header>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="message message-error">
+    {{ error }}
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading && orders.length === 0" class="loading-container">
+    <div class="spinner"></div>
+    <p>Chargement de vos commandes...</p>
+  </div>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Empty State -->
+    <div *ngIf="!loading && orders.length === 0" class="empty-state">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+      </svg>
+      <h3>Aucune commande</h3>
+      <p>Vous n'avez pas encore passé de commande</p>
+      <button (click)="goBack()" class="btn btn-primary">
+        Commencer mes achats
+      </button>
+    </div>
+
+    <!-- Orders List -->
+    <div *ngIf="!loading && orders.length > 0" class="orders-container">
+      <div *ngFor="let order of orders" class="order-card">
+        <div class="order-header">
+          <div class="order-info">
+            <h3 class="order-number">Commande #{{ order.id }}</h3>
+            <p class="order-date">{{ formatDate(order.createdAt) }}</p>
+          </div>
+          <span
+            class="status-badge"
+            [ngClass]="getOrderStatusColor(getOrderStatus(order))">
+            {{ getOrderStatusLabel(getOrderStatus(order)) }}
+          </span>
+        </div>
+
+        <div class="order-body">
+          <!-- ⭐ PRODUITS AVEC QUANTITÉS ET PRIX -->
+          <div class="order-products">
+            <h4 class="section-title">Produits</h4>
+            <div class="product-list">
+              <div *ngFor="let line of order.orderLines" class="product-item">
+                <div class="product-item-left">
+                  <span class="product-name">{{ line.productName }}</span>
+                </div>
+                <div class="product-item-right">
+                  <span class="product-quantity">x{{ line.quantity }}</span>
+                  <span class="product-price">{{ line.unitPrice | number:'1.2-2' }} MAD</span>
+                  <span class="product-total">{{ line.totalPrice | number:'1.2-2' }} MAD</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ⭐ RÉSUMÉ AVEC TOTAUX -->
+          <div class="order-summary">
+            <div class="summary-row">
+              <span class="summary-label">Articles:</span>
+              <span class="summary-value">{{ getTotalItems(order) }}</span>
+            </div>
+            <div class="summary-row summary-total">
+              <span class="summary-label">Total:</span>
+              <span class="summary-value">{{ getOrderTotal(order) | number:'1.2-2' }} MAD</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="order-footer">
+          <button
+            (click)="viewOrderDetails(order)"
+            class="btn btn-secondary">
+            Voir détails
+          </button>
+          <button
+            *ngIf="canCancelOrder(order)"
+            (click)="cancelOrder(order)"
+            class="btn btn-danger">
+            Annuler
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ⭐ MODAL DÉTAILS COMMANDE -->
+  <div *ngIf="selectedOrder" class="modal-overlay" (click)="closeOrderDetails()">
+    <div class="modal modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">Détails de la commande #{{ selectedOrder.id }}</h2>
+        <button (click)="closeOrderDetails()" class="btn btn-icon">
+          <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Informations générales -->
+        <div class="detail-section">
+          <h3 class="detail-section-title">Informations</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">Numéro:</span>
+              <span class="detail-value">#{{ selectedOrder.id }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Date:</span>
+              <span class="detail-value">{{ formatDate(selectedOrder.createdAt) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Statut:</span>
+              <span
+                class="status-badge"
+                [ngClass]="getOrderStatusColor(getOrderStatus(selectedOrder))">
+                {{ getOrderStatusLabel(getOrderStatus(selectedOrder)) }}
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Client:</span>
+              <span class="detail-value">{{ selectedOrder.clientName }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ⭐ LIGNES DE COMMANDE DÉTAILLÉES -->
+        <div class="detail-section">
+          <h3 class="detail-section-title">Produits commandés</h3>
+          <div class="order-lines-table">
+            <table class="table">
+              <thead>
+              <tr>
+                <th>Produit</th>
+                <th class="text-center">Quantité</th>
+                <th class="text-right">Prix unitaire</th>
+                <th class="text-right">Total</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr *ngFor="let line of selectedOrder.orderLines">
+                <td>
+                  <div class="product-cell">
+                    <span class="product-name-main">{{ line.productName }}</span>
+                  </div>
+                </td>
+                <td class="text-center">
+                  <span class="quantity-badge">{{ line.quantity }}</span>
+                </td>
+                <td class="text-right">
+                  {{ line.unitPrice | number:'1.2-2' }} MAD
+                </td>
+                <td class="text-right font-medium">
+                  {{ line.totalPrice | number:'1.2-2' }} MAD
+                </td>
+              </tr>
+              </tbody>
+              <tfoot>
+              <tr class="total-row">
+                <td colspan="2" class="text-left font-bold">Total</td>
+                <td class="text-right">{{ getTotalItems(selectedOrder) }} articles</td>
+                <td class="text-right font-bold text-primary">
+                  {{ getOrderTotal(selectedOrder) | number:'1.2-2' }} MAD
+                </td>
+              </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- Timeline de la commande -->
+        <div class="detail-section">
+          <h3 class="detail-section-title">Suivi de la commande</h3>
+          <div class="order-timeline">
+            <div class="timeline-item" [class.completed]="selectedOrder.createdAt">
+              <div class="timeline-marker"></div>
+              <div class="timeline-content">
+                <p class="timeline-title">Commande créée</p>
+                <p class="timeline-date">{{ formatDate(selectedOrder.createdAt) }}</p>
+              </div>
+            </div>
+
+            <div class="timeline-item" [class.completed]="selectedOrder.reservedAt">
+              <div class="timeline-marker"></div>
+              <div class="timeline-content">
+                <p class="timeline-title">Commande réservée</p>
+                <p class="timeline-date">
+                  {{ selectedOrder.reservedAt ? formatDate(selectedOrder.reservedAt) : 'En attente' }}
+                </p>
+              </div>
+            </div>
+
+            <div class="timeline-item" [class.completed]="selectedOrder.shippedAt">
+              <div class="timeline-marker"></div>
+              <div class="timeline-content">
+                <p class="timeline-title">Commande expédiée</p>
+                <p class="timeline-date">
+                  {{ selectedOrder.shippedAt ? formatDate(selectedOrder.shippedAt) : 'En attente' }}
+                </p>
+              </div>
+            </div>
+
+            <div class="timeline-item" [class.completed]="selectedOrder.deliveredAt">
+              <div class="timeline-marker"></div>
+              <div class="timeline-content">
+                <p class="timeline-title">Commande livrée</p>
+                <p class="timeline-date">
+                  {{ selectedOrder.deliveredAt ? formatDate(selectedOrder.deliveredAt) : 'En attente' }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button (click)="closeOrderDetails()" class="btn btn-secondary">
+          Fermer
+        </button>
+        <button
+          *ngIf="canCancelOrder(selectedOrder)"
+          (click)="cancelOrder(selectedOrder)"
+          class="btn btn-danger">
+          Annuler la commande
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

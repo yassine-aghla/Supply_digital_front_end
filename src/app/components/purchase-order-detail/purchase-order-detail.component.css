@@ -15,7 +15,61 @@
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+/* components/purchase-order-detail/purchase-order-detail.component.css */
 
+.warehouse-selector {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  border: 1px solid #dee2e6;
+}
+
+.warehouse-selector label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #495057;
+}
+
+.warehouse-selector .form-control {
+  margin-bottom: 10px;
+}
+
+.selected-warehouse-info {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background-color: #e7f3ff;
+  border: 1px solid #b3d7ff;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.selected-warehouse-info i {
+  margin-right: 8px;
+  color: #28a745;
+}
+
+.warehouse-loading {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.warehouse-loading .spinner-small {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+
+/* Style pour le select */
+.form-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
 .page-header > div:first-child {
   display: flex;
   align-items: center;

@@ -2,6 +2,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import {LayoutService} from '../../services/layout.service';
 
 interface StatCard {
   title: string;
@@ -57,8 +58,12 @@ export class DashboardComponent implements OnInit {
     { action: 'Rapport généré', time: 'Il y a 1 heure', user: 'Admin', icon: 'fas fa-chart-bar' },
     { action: 'Stock ajusté', time: 'Il y a 2 heures', user: 'Warehouse', icon: 'fas fa-adjust' }
   ];
+  constructor(private layoutService: LayoutService ) {
 
-  ngOnInit(): void {}
+  }
+  ngOnInit(): void {
+    this.layoutService.showLayout();
+  }
 
   getChangeColor(change: number): string {
     return change >= 0 ? '#10b981' : '#ef4444';

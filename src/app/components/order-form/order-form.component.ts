@@ -135,6 +135,12 @@ export class OrderFormComponent implements OnInit {
     if (line.productId) {
       const product = this.products.find(p => p.id === line.productId);
 
+      if (product && product.price) {
+        line.unitPrice = product.price;
+        console.log(`Prix automatiquement défini pour ${product.name}: ${product.price} MAD`);
+      } else {
+        line.unitPrice = 0;
+      }
     }
   }
 
@@ -190,10 +196,7 @@ export class OrderFormComponent implements OnInit {
         return false;
       }
 
-      if (line.unitPrice < 0) {
-        this.error = `Ligne ${i + 1}: Le prix unitaire ne peut pas être négatif`;
-        return false;
-      }
+
     }
 
     return true;
@@ -225,7 +228,7 @@ export class OrderFormComponent implements OnInit {
       next: (order) => {
         this.submitting = false;
         console.log('Commande enregistrée:', order);
-        this.router.navigate(['/orders', order.id]);
+        this.router.navigate(['/sales-orders', order.id]);
       },
       error: (err) => {
         console.error('Erreur lors de l\'enregistrement:', err);
@@ -251,6 +254,12 @@ export class OrderFormComponent implements OnInit {
     if (!productId) return '';
     const product = this.products.find(p => p.id === productId);
     return product?.category || '';
+  }
+
+  getProductPrice(productId: number | null): number {
+    if (!productId) return 0;
+    const product = this.products.find(p => p.id === productId);
+    return product?.price || 0;
   }
 }
 

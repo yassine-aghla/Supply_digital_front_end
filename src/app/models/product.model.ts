@@ -13,6 +13,9 @@ export interface Product {
   index?: boolean;
   profile?: string;
   status?: string;
+  price:number;
+  stockQuantity:number;
+  imageUrl:string;
 }
 
 export enum ProductStatus {

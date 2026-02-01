@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import {Observable, throwError} from 'rxjs';
 import { Warehouse } from '../models/warehouse.model';
+import {catchError, tap} from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -50,5 +51,20 @@ export class WarehouseService {
       {}
   );
 
+  }
+  getMyWarehouses(): Observable<Warehouse[]> {
+    return this.http.get<Warehouse[]>(`${this.apiUrl}/my-warehouses`).pipe(
+      tap(warehouses => console.log('My Warehouses loaded:', warehouses)),
+      catchError(this.handleError)
+    );
+  }
+
+  private handleError(error: any): Observable<never> {
+    console.error('warehouse error:', error);
+    return throwError(() => ({
+      message: error.error?.message || 'Une erreur est survenue',
+      status: error.status,
+      error: error.error
+    }));
   }
 }

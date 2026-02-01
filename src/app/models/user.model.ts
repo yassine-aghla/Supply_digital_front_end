@@ -39,9 +39,13 @@ export interface LoginRequest {
 }
 
 export interface AuthResponse {
-  token: string;
-  user: User;
-  expiresIn: number;
+  token?: string;
+  accessToken?: string;
+  user?: User;
+  expiresIn?: number;
+  tokenType?: string;
+  email?: string;
+  [key: string]: any;
 }
 
 

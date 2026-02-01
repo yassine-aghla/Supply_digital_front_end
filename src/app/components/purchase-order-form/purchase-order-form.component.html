@@ -206,21 +206,25 @@
 
             <!-- Unit Price -->
             <div class="form-group">
-              <label>Prix Unitaire (MAD) <span class="required">*</span></label>
+              <label>Prix Unitaire d'Achat (MAD)</label>
+              <div class="price-display">
+                <div class="readonly-price">
+                  <i class="fas fa-money-bill-wave"></i>
+                  {{ getProductPrice(line.productId) | number:'1.2-2' }} MAD
+                </div>
+                <small class="form-text text-muted">
+                  <i class="fas fa-info-circle"></i> Prix d'achat selon le produit
+                </small>
+              </div>
+
+              <!-- Champ caché pour stocker le prix -->
               <input
-                type="number"
+                type="hidden"
                 [(ngModel)]="line.unitPrice"
                 [name]="'unitPrice_' + i"
-                class="form-control"
-                min="0"
-                step="0.01"
-                required
+                [value]="getProductPrice(line.productId)"
               />
-              <small class="form-text text-muted">
-                <i class="fas fa-info-circle"></i> Prix suggéré par le produit
-              </small>
             </div>
-
             <!-- Line Total -->
             <div class="form-group">
               <label>Total Ligne</label>

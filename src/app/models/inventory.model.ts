@@ -101,3 +101,4 @@ export enum MovementType {
   RESERVATION = 'RESERVATION',
   RELEASE = 'RELEASE'
 }
+
